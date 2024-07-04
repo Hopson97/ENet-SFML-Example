@@ -58,6 +58,17 @@ void Server::launch()
 
                     std::cout << "Got message from client:" << message << '\n';
 
+                    sf::Packet sfml_packet;
+                    sfml_packet << message;
+                    ENetPacket* packet =
+                        enet_packet_create(sfml_packet.getData(), sfml_packet.getDataSize(), 0);
+
+                    for (int i = 0; i < server_->connectedPeers; i++)
+                    {
+                        enet_peer_send(&server_->peers[i], 0, packet);
+                    }
+                    enet_host_flush(server_);
+
                     /* Clean up the packet now that we're done using it. */
                     enet_packet_destroy(event.packet);
                 }

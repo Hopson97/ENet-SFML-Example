@@ -106,12 +106,19 @@ void Application::on_update(sf::Time dt)
         switch (event.type)
         {
             case ENET_EVENT_TYPE_RECEIVE:
-                printf("A packet of length %lu containing %s was received from %s on channel %u.\n",
-                       event.packet->dataLength, event.packet->data, event.peer->data,
-                       event.channelID);
+            {
+                sf::Packet p;
+                p.append(event.packet->data, event.packet->dataLength);
+
+                std::string message;
+                p >> message;
+
+                std::cout << "Got message from server:" << message << '\n';
+
                 /* Clean up the packet now that we're done using it. */
                 enet_packet_destroy(event.packet);
-                break;
+            }
+            break;
 
             case ENET_EVENT_TYPE_DISCONNECT:
                 std::cout << std::format("Client has disconnected: {}.\n", 1);
@@ -137,16 +144,19 @@ void Application::on_fixed_update(sf::Time dt)
 
 void Application::on_render(sf::RenderWindow& window)
 {
+    static char message[128];
     if (ImGui::Begin("Connect status."))
     {
         ImGui::Text("%s", connect_state_to_string(connect_state_));
 
         if (connect_state_ == ConnectState::Connected)
         {
+            ImGui::InputText("Message", message, 128);
+
             if (ImGui::Button("Send something"))
             {
                 sf::Packet sfml_packet;
-                sfml_packet << std::string{"Hello world\n"};
+                sfml_packet << std::string{message};
 
                 ENetPacket* packet =
                     enet_packet_create(sfml_packet.getData(), sfml_packet.getDataSize(), 0);
