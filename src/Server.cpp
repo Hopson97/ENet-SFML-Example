@@ -2,6 +2,8 @@
 
 #include <iostream>
 
+#include <SFML/Network/Packet.hpp>
+
 constexpr int MAX_CLIENTS = 5;
 
 Server::~Server()
@@ -39,20 +41,27 @@ void Server::launch()
             switch (event.type)
             {
                 case ENET_EVENT_TYPE_CONNECT:
-                    std::printf("A new client connected from %x:%u.\n", event.peer->address.host,
-                                event.peer->address.port);
+                    // Host -> event.peer->address.host
+                    // Port -> event.peer->address.port
+                    std::cout << "A new client connected.\n";
                     /* Store any relevant client information here. */
                     event.peer->data = (void*)5;
                     break;
 
                 case ENET_EVENT_TYPE_RECEIVE:
-                    printf("A packet of length %lu containing %s was received from %s on channel "
-                           "%u.\n",
-                           event.packet->dataLength, event.packet->data, event.peer->data,
-                           event.channelID);
+                {
+                    sf::Packet p;
+                    p.append(event.packet->data, event.packet->dataLength);
+
+                    std::string message;
+                    p >> message;
+
+                    std::cout << "Got message from client:" << message << '\n';
+
                     /* Clean up the packet now that we're done using it. */
                     enet_packet_destroy(event.packet);
-                    break;
+                }
+                break;
 
                 case ENET_EVENT_TYPE_DISCONNECT:
                     std::cout << std::format("Client has disconnected: {}.\n", 1);

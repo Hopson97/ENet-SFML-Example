@@ -34,12 +34,9 @@ int main()
     TimeStep fixed_updater{50};
     Profiler profiler;
     bool show_profiler = false;
+    bool option_selected = false;
 
     Application app;
-    if (!app.on_start())
-    {
-        return EXIT_FAILURE;
-    }
 
     while (window.isOpen())
     {
@@ -57,9 +54,28 @@ int main()
             }
         }
         auto dt = clock.restart();
-
         // Update
         ImGui::SFML::Update(window, dt);
+
+        if (!option_selected)
+        {
+            if (ImGui::Begin("Connect"))
+            {
+                if (ImGui::Button("Host"))
+                {
+                    app.init_as_host();
+                    option_selected = true;
+                }
+                else if (ImGui::Button("Client"))
+                {
+                    app.init_as_client();
+                    option_selected = true;
+                }
+            }
+            ImGui::End();
+        }
+
+
         {
             auto& update_profiler = profiler.begin_section("Update");
             app.on_update(dt);

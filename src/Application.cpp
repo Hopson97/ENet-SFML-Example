@@ -1,8 +1,28 @@
 #include "Application.h"
 
+#include <SFML/Network/Packet.hpp>
 #include <imgui.h>
 
 #include <iostream>
+
+namespace
+{
+    const char* connect_state_to_string(ConnectState state)
+    {
+        switch (state)
+        {
+            case ConnectState::Disconnected:
+                return "Disconnected";
+            case ConnectState::Connected:
+                return "Connected";
+            case ConnectState::Connecting:
+                return "Connecting...";
+            case ConnectState::ConnectFailed:
+                return "Connection failed";
+        }
+        return "Unknown";
+    }
+} // namespace
 
 Application::Application()
 {
@@ -10,29 +30,31 @@ Application::Application()
 
 Application::~Application()
 {
-    if (peer_)
-    {
-        enet_peer_reset(peer_);
-    }
-    enet_host_destroy(client_);
+    disconnect();
 }
 
-bool Application::on_start()
+bool Application::init_as_host()
 {
     if (!server_.run())
     {
         return false;
     }
+    return init_as_client();
+}
 
+bool Application::init_as_client()
+{
     connect_thread_ = std::jthread(
         [&]
         {
+            connect_state_ = ConnectState::Connecting;
+
             client_ = enet_host_create(nullptr, 1, 2, 0, 0);
             if (!client_)
             {
                 connect_state_ = ConnectState::ConnectFailed;
                 std::cerr << "Failed to create a client host.\n";
-                return false;
+                return;
             }
 
             ENetAddress address = {0};
@@ -40,12 +62,12 @@ bool Application::on_start()
             address.port = 12345;
 
             // Connect!
-            ENetPeer* peer = enet_host_connect(client_, &address, 2, 0);
-            if (!peer)
+            peer_ = enet_host_connect(client_, &address, 2, 0);
+            if (!peer_)
             {
                 connect_state_ = ConnectState::ConnectFailed;
                 std::cerr << "No available peers for initiating an ENet connection.\n";
-                return false;
+                return;
             }
 
             // Await for success...
@@ -53,15 +75,15 @@ bool Application::on_start()
             if (enet_host_service(client_, &event, 5000) > 0 &&
                 event.type == ENET_EVENT_TYPE_CONNECT)
             {
-                connect_state_ = ConnectState::ConnectedSuccess;
+                connect_state_ = ConnectState::Connected;
                 std::cout << "Connected!\n";
             }
             else
             {
-                enet_peer_reset(peer);
+                enet_peer_reset(peer_);
                 connect_state_ = ConnectState::ConnectFailed;
                 std::cerr << "Connection to server failed.\n";
-                return false;
+                return;
             }
         });
 
@@ -74,15 +96,11 @@ void Application::on_event(const sf::RenderWindow& window, const sf::Event& e)
 
 void Application::on_update(sf::Time dt)
 {
-
-
-
-    if (connect_state_ != ConnectState::ConnectedSuccess)
+    if (connect_state_ != ConnectState::Connected)
     {
-
         return;
     }
-    
+
     for (ENetEvent event; enet_host_service(client_, &event, 0);)
     {
         switch (event.type)
@@ -121,15 +139,54 @@ void Application::on_render(sf::RenderWindow& window)
 {
     if (ImGui::Begin("Connect status."))
     {
-        if (connect_state_ != ConnectState::ConnectedSuccess)
-        {
-            ImGui::Text("Connecting...");
-        }
-        else
-        {
-            ImGui::Text("Connected.");
+        ImGui::Text("%s", connect_state_to_string(connect_state_));
 
+        if (connect_state_ == ConnectState::Connected)
+        {
+            if (ImGui::Button("Send something"))
+            {
+                sf::Packet sfml_packet;
+                sfml_packet << std::string{"Hello world\n"};
+
+                ENetPacket* packet =
+                    enet_packet_create(sfml_packet.getData(), sfml_packet.getDataSize(), 0);
+                enet_peer_send(peer_, 0, packet);
+                enet_host_flush(client_);
+            }
         }
     }
     ImGui::End();
+}
+
+void Application::disconnect()
+{
+    std::cout << peer_ << std::endl;
+    if (peer_)
+    {
+        std::cout << "Disconnecting\n";
+        enet_peer_disconnect(peer_, 0);
+
+        // Wait for the disconnect to complete.
+        ENetEvent event = {};
+        bool success_disconnect = false;
+        while (enet_host_service(client_, &event, 2000) > 0)
+        {
+            switch (event.type)
+            {
+                case ENET_EVENT_TYPE_RECEIVE:
+                    enet_packet_destroy(event.packet);
+                    break;
+
+                case ENET_EVENT_TYPE_DISCONNECT:
+                    std::cout << "Disconnect success\n";
+                    success_disconnect = true;
+                    break;
+            }
+        }
+        if (!success_disconnect)
+        {
+            enet_peer_reset(peer_);
+        }
+    }
+    enet_host_destroy(client_);
 }
