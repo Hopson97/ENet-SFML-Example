@@ -12,8 +12,24 @@
 #include "Util/Profiler.h"
 #include "Util/TimeStep.h"
 
-bool run_loop(sf::RenderWindow& window)
+int main()
 {
+    if (enet_initialize() != 0)
+    {
+        std::cerr << "Failed to init ENet.\n";
+        return EXIT_FAILURE;
+    }
+
+    sf::RenderWindow window({1280, 720}, "SFML");
+    window.setVerticalSyncEnabled(true);
+    window.setActive(true);
+
+    if (!ImGui::SFML::Init(window))
+    {
+        std::cerr << "Failed to init ImGUI::SFML\n";
+        return EXIT_FAILURE;
+    }
+
     sf::Clock clock;
     TimeStep fixed_updater{50};
     Profiler profiler;
@@ -75,27 +91,6 @@ bool run_loop(sf::RenderWindow& window)
         ImGui::SFML::Render(window);
         window.display();
     }
-}
-
-int main()
-{
-    if (enet_initialize() != 0)
-    {
-        std::cerr << "Failed to init ENet.\n";
-        return EXIT_FAILURE;
-    }
-
-    sf::RenderWindow window({1280, 720}, "SFML");
-    window.setVerticalSyncEnabled(true);
-    window.setActive(true);
-
-    if (!ImGui::SFML::Init(window))
-    {
-        std::cerr << "Failed to init ImGUI::SFML\n";
-        return EXIT_FAILURE;
-    }
-
-    run_loop(window);
 
 
 

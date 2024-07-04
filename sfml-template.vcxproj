@@ -174,7 +174,6 @@
     <None Include="sfml-window-d-2.dll" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\Hopperia-Testing\src\Util\Array2D.h" />
     <ClInclude Include="deps\enet\enet.h" />
     <ClInclude Include="src\Application.h" />
     <ClInclude Include="deps\imgui_sfml\imconfig-SFML.h" />

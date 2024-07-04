@@ -1,5 +1,7 @@
 #include "Application.h"
 
+#include <imgui.h>
+
 #include <iostream>
 
 Application::Application()
@@ -22,37 +24,46 @@ bool Application::on_start()
         return false;
     }
 
-    client_ = enet_host_create(nullptr, 1, 2, 0, 0);
-    if (!client_)
-    {
-        std::cerr << "Failed to create a client host.\n";
-        return false;
-    }
+    connect_thread_ = std::jthread(
+        [&]
+        {
+            client_ = enet_host_create(nullptr, 1, 2, 0, 0);
+            if (!client_)
+            {
+                connect_state_ = ConnectState::ConnectFailed;
+                std::cerr << "Failed to create a client host.\n";
+                return false;
+            }
 
-    ENetAddress address = {0};
-    enet_address_set_host(&address, "127.0.0.1");
-    address.port = 12345;
+            ENetAddress address = {0};
+            enet_address_set_host(&address, "127.0.0.1");
+            address.port = 12345;
 
-    // Connect!
-    ENetPeer* peer = enet_host_connect(client_, &address, 2, 0);
-    if (!peer)
-    {
-        std::cerr << "No available peers for initiating an ENet connection.\n";
-        return false;
-    }
+            // Connect!
+            ENetPeer* peer = enet_host_connect(client_, &address, 2, 0);
+            if (!peer)
+            {
+                connect_state_ = ConnectState::ConnectFailed;
+                std::cerr << "No available peers for initiating an ENet connection.\n";
+                return false;
+            }
 
-    // Await for success...
-    ENetEvent event;
-    if (enet_host_service(client_, &event, 5000) > 0 && event.type == ENET_EVENT_TYPE_CONNECT)
-    {
-        std::cout << "Connected!\n";
-    }
-    else
-    {
-        enet_peer_reset(peer);
-        std::cerr << "Connection to server failed.\n";
-        return false;
-    }
+            // Await for success...
+            ENetEvent event;
+            if (enet_host_service(client_, &event, 5000) > 0 &&
+                event.type == ENET_EVENT_TYPE_CONNECT)
+            {
+                connect_state_ = ConnectState::ConnectedSuccess;
+                std::cout << "Connected!\n";
+            }
+            else
+            {
+                enet_peer_reset(peer);
+                connect_state_ = ConnectState::ConnectFailed;
+                std::cerr << "Connection to server failed.\n";
+                return false;
+            }
+        });
 
     return true;
 }
@@ -63,6 +74,15 @@ void Application::on_event(const sf::RenderWindow& window, const sf::Event& e)
 
 void Application::on_update(sf::Time dt)
 {
+
+
+
+    if (connect_state_ != ConnectState::ConnectedSuccess)
+    {
+
+        return;
+    }
+    
     for (ENetEvent event; enet_host_service(client_, &event, 0);)
     {
         switch (event.type)
@@ -99,4 +119,17 @@ void Application::on_fixed_update(sf::Time dt)
 
 void Application::on_render(sf::RenderWindow& window)
 {
+    if (ImGui::Begin("Connect status."))
+    {
+        if (connect_state_ != ConnectState::ConnectedSuccess)
+        {
+            ImGui::Text("Connecting...");
+        }
+        else
+        {
+            ImGui::Text("Connected.");
+
+        }
+    }
+    ImGui::End();
 }
