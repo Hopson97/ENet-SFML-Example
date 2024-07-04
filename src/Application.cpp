@@ -158,8 +158,8 @@ void Application::on_render(sf::RenderWindow& window)
                 sf::Packet sfml_packet;
                 sfml_packet << std::string{message};
 
-                ENetPacket* packet =
-                    enet_packet_create(sfml_packet.getData(), sfml_packet.getDataSize(), 0);
+                ENetPacket* packet = enet_packet_create(
+                    sfml_packet.getData(), sfml_packet.getDataSize(), ENET_PACKET_FLAG_RELIABLE);
                 enet_peer_send(peer_, 0, packet);
                 enet_host_flush(client_);
             }
