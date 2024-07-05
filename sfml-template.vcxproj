@@ -179,6 +179,7 @@
     <ClInclude Include="deps\imgui_sfml\imconfig-SFML.h" />
     <ClInclude Include="deps\imgui_sfml\imgui-SFML.h" />
     <ClInclude Include="deps\imgui_sfml\imgui-SFML_export.h" />
+    <ClInclude Include="src\NetworkMessage.h" />
     <ClInclude Include="src\Server.h" />
     <ClInclude Include="src\Util\Array2D.h" />
     <ClInclude Include="src\Util\ImGuiExtension.h" />

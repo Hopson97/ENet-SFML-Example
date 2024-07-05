@@ -2,9 +2,28 @@
 
 #include <iostream>
 
-#include <SFML/Network/Packet.hpp>
+#include "NetworkMessage.h"
 
 constexpr int MAX_CLIENTS = 5;
+
+namespace
+{
+    void reset_player_peer(ENetPeer* peer)
+    {
+        if (!peer)
+        {
+            return;
+        }
+
+        auto player = (ServerPlayer*)peer->data;
+        if (player)
+        {
+            std::cout << "bye bye\n";
+            player->peer = nullptr;
+        }
+        peer->data = nullptr;
+    }
+} // namespace
 
 Server::~Server()
 {
@@ -28,11 +47,13 @@ bool Server::run()
 
 void Server::launch()
 {
+    int ticks = 0;
     running_ = true;
     while (running_)
     {
-        std::this_thread::sleep_for(std::chrono::seconds(1));
-        std::cout << "Hello world\n";
+        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+
+        if (++ticks % 20)
 
         ENetEvent event;
         while (enet_host_service(server_, &event, 0) > 0)
@@ -45,43 +66,49 @@ void Server::launch()
                     // Port -> event.peer->address.port
                     std::cout << "A new client connected.\n";
                     /* Store any relevant client information here. */
-                    event.peer->data = (void*)5;
+                    for (auto& player : players_)
+                    {
+                        if (!player.peer)
+                        {
+                            player.peer = event.peer;
+                            event.peer->data = (void*)&player;
+                        }
+                    }
                     break;
 
                 case ENET_EVENT_TYPE_RECEIVE:
                 {
-                    sf::Packet p;
-                    p.append(event.packet->data, event.packet->dataLength);
+                    ToServerNetworkMessage incoming_message{event.packet};
+                    switch (incoming_message.message_type)
+                    {
+                        case ToServerMessageType::Message:
+                        {
+                            std::string text;
+                            incoming_message.payload >> text;
+                            std::cout << "Got message from client: " << text << '\n';
 
-                    std::string message;
-                    p >> message;
+                            ToClientNetworkMessage outgoing_message{ToClientMessage::Message};
+                            outgoing_message.payload << text;
+                            enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
+                            enet_host_flush(server_);
+                        }
+                        break;
 
-                    std::cout << "Got message from client:" << message << '\n';
-
-                    sf::Packet sfml_packet;
-                    sfml_packet << message;
-                    ENetPacket* packet =
-                        enet_packet_create(sfml_packet.getData(), sfml_packet.getDataSize(),
-                                           ENET_PACKET_FLAG_RELIABLE);
-
-                    enet_host_broadcast(server_, 0, packet);
-                    enet_host_flush(server_);
-
-                    /* Clean up the packet now that we're done using it. */
+                        default:
+                            break;
+                    }
                     enet_packet_destroy(event.packet);
                 }
                 break;
 
                 case ENET_EVENT_TYPE_DISCONNECT:
                     std::cout << std::format("Client has disconnected: {}.\n", 1);
-                    /* Reset the peer's client information. */
-                    event.peer->data = nullptr;
+                    reset_player_peer(event.peer);
                     break;
 
                 case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
                     std::cout << std::format("Client has timeouted: {}.\n", 1);
-                    /* Reset the peer's client information. */
-                    event.peer->data = nullptr;
+                    reset_player_peer(event.peer);
                     break;
 
                 default:

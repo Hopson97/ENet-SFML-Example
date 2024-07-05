@@ -1,9 +1,11 @@
 #include "Application.h"
 
+#include <iostream>
+
 #include <SFML/Network/Packet.hpp>
 #include <imgui.h>
 
-#include <iostream>
+#include "NetworkMessage.h"
 
 namespace
 {
@@ -107,15 +109,20 @@ void Application::on_update(sf::Time dt)
         {
             case ENET_EVENT_TYPE_RECEIVE:
             {
-                sf::Packet p;
-                p.append(event.packet->data, event.packet->dataLength);
+                ToClientNetworkMessage incoming_message(event.packet);
+                switch (incoming_message.message_type)
+                {
+                    case ToClientMessage::Message:
+                    {
+                        std::string message;
+                        incoming_message.payload >> message;
+                        std::cout << "Got message from server:" << message << '\n';
+                    }
+                    break;
 
-                std::string message;
-                p >> message;
-
-                std::cout << "Got message from server:" << message << '\n';
-
-                /* Clean up the packet now that we're done using it. */
+                    default:
+                        break;
+                }
                 enet_packet_destroy(event.packet);
             }
             break;
@@ -155,12 +162,9 @@ void Application::on_render(sf::RenderWindow& window)
 
             if (ImGui::Button("Send something"))
             {
-                sf::Packet sfml_packet;
-                sfml_packet << std::string{message};
-
-                ENetPacket* packet = enet_packet_create(
-                    sfml_packet.getData(), sfml_packet.getDataSize(), ENET_PACKET_FLAG_RELIABLE);
-                enet_peer_send(peer_, 0, packet);
+                ToServerNetworkMessage outgoing_message{ToServerMessageType::Message};
+                outgoing_message.payload << std::string{message};
+                enet_peer_send(peer_, 0, outgoing_message.to_enet_packet());
                 enet_host_flush(client_);
             }
         }

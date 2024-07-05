@@ -1,10 +1,18 @@
 #pragma once
 
 #include <atomic>
-#include <memory>
 #include <thread>
+#include <array>
+
+#include <SFML/System/Vector2.hpp>
 
 #include <enet/enet.h>
+
+struct ServerPlayer
+{
+    ENetPeer* peer = nullptr;
+    sf::Vector2f position;
+};
 
 class Server
 {
@@ -29,4 +37,6 @@ class Server
 
     // Network stuff
     ENetHost* server_ = nullptr;
+
+    std::array<ServerPlayer, 4> players_;
 };
