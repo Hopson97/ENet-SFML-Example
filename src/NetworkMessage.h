@@ -7,6 +7,8 @@ enum class ToServerMessageType : uint16_t
 {
     None,
     Message,
+
+    Position,
 };
 
 enum class ToClientMessage : uint16_t
@@ -15,7 +17,9 @@ enum class ToClientMessage : uint16_t
 
     Message,
     PlayerJoin,
-    PlayerLeave
+    PlayerLeave,
+
+    Snapshot,
 };
 
 template <typename E>

@@ -8,6 +8,8 @@
 
 #include <enet/enet.h>
 
+constexpr int MAX_CLIENTS = 5;
+
 struct ServerPlayer
 {
     ENetPeer* peer = nullptr;
@@ -38,5 +40,5 @@ class Server
     // Network stuff
     ENetHost* server_ = nullptr;
 
-    std::array<ServerPlayer, 4> players_;
+    std::array<ServerPlayer, MAX_CLIENTS> players_;
 };

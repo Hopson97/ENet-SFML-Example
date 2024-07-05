@@ -1,7 +1,9 @@
 #pragma once
 
+#include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Clock.hpp>
+
 
 #include "Server.h"
 
@@ -11,6 +13,12 @@ enum class ConnectState
     Connecting,
     Connected,
     ConnectFailed,
+};
+
+struct Entity
+{
+    sf::RectangleShape sprite;
+    bool active = false;
 };
 
 class Application
@@ -36,4 +44,8 @@ class Application
 
     std::atomic<ConnectState> connect_state_ = ConnectState::Disconnected;
     std::jthread connect_thread_;
+
+    sf::RectangleShape sprite_;
+
+    std::array<Entity, MAX_CLIENTS> entities_;
 };

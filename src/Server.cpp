@@ -4,7 +4,7 @@
 
 #include "NetworkMessage.h"
 
-constexpr int MAX_CLIENTS = 5;
+
 
 namespace
 {

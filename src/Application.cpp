@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include <SFML/Network/Packet.hpp>
+#include <SFML/Window/Keyboard.hpp>
 #include <imgui.h>
 
 #include "NetworkMessage.h"
@@ -28,6 +29,13 @@ namespace
 
 Application::Application()
 {
+    sprite_.setFillColor(sf::Color::Red);
+    sprite_.setSize({64, 64});
+    for (auto& e : entities_)
+    {
+        e.sprite.setFillColor(sf::Color::Blue);
+        e.sprite.setSize({64, 64});
+    }
 }
 
 Application::~Application()
@@ -151,6 +159,27 @@ void Application::on_update(sf::Time dt)
                 break;
         }
     }
+
+    // Send position
+
+
+    constexpr int speed = 8;
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+    {
+        sprite_.move({0, -1});
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+    {
+        sprite_.move({-1, 0});
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+    {
+        sprite_.move({0, 1});
+    }
+    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+    {
+        sprite_.move({1, 0});
+    }
 }
 
 void Application::on_fixed_update(sf::Time dt)
@@ -178,6 +207,20 @@ void Application::on_render(sf::RenderWindow& window)
         }
     }
     ImGui::End();
+
+    if (connect_state_ != ConnectState::Connected)
+    {
+        return;
+    }
+
+    window.draw(sprite_);
+    for (auto& e : entities_)
+    {
+        if (e.active)
+        {
+            window.draw(e.sprite);
+        }
+    }
 }
 
 void Application::disconnect()
