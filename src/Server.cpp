@@ -18,7 +18,6 @@ namespace
         auto player = (ServerPlayer*)peer->data;
         if (player)
         {
-            std::cout << "bye bye\n";
             player->peer = nullptr;
         }
         peer->data = nullptr;
@@ -53,7 +52,10 @@ void Server::launch()
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(50));
 
-        if (++ticks % 20)
+        if (++ticks % 20 == 0)
+        {
+            std::cout << "Ticks: " << ticks << " (" << ticks / 20 << " seconds)" << '\n';
+        }
 
         ENetEvent event;
         while (enet_host_service(server_, &event, 0) > 0)
@@ -62,10 +64,11 @@ void Server::launch()
             switch (event.type)
             {
                 case ENET_EVENT_TYPE_CONNECT:
+                {
+
                     // Host -> event.peer->address.host
                     // Port -> event.peer->address.port
                     std::cout << "A new client connected.\n";
-                    /* Store any relevant client information here. */
                     for (auto& player : players_)
                     {
                         if (!player.peer)
@@ -74,7 +77,10 @@ void Server::launch()
                             event.peer->data = (void*)&player;
                         }
                     }
-                    break;
+                    ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerJoin};
+                    enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
+                }
+                break;
 
                 case ENET_EVENT_TYPE_RECEIVE:
                 {
@@ -102,14 +108,23 @@ void Server::launch()
                 break;
 
                 case ENET_EVENT_TYPE_DISCONNECT:
+                {
+
                     std::cout << std::format("Client has disconnected: {}.\n", 1);
                     reset_player_peer(event.peer);
-                    break;
+                    ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerLeave};
+                    enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
+                }
+                break;
 
                 case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
+                {
                     std::cout << std::format("Client has timeouted: {}.\n", 1);
                     reset_player_peer(event.peer);
-                    break;
+                    ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerLeave};
+                    enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
+                }
+                break;
 
                 default:
                     break;

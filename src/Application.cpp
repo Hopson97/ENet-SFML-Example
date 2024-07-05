@@ -120,6 +120,14 @@ void Application::on_update(sf::Time dt)
                     }
                     break;
 
+                    case ToClientMessage::PlayerJoin:
+                        std::cout << "A player has joined.\n";
+                        break;
+
+                    case ToClientMessage::PlayerLeave:
+                        std::cout << "A player has left.\n";
+                        break;
+
                     default:
                         break;
                 }
@@ -174,7 +182,6 @@ void Application::on_render(sf::RenderWindow& window)
 
 void Application::disconnect()
 {
-    std::cout << peer_ << std::endl;
     if (peer_)
     {
         std::cout << "Disconnecting\n";
