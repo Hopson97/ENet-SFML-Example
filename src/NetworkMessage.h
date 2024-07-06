@@ -29,13 +29,13 @@ concept NetworkMessageType =
 template <NetworkMessageType MessageType>
 struct NetworkMessage
 {
-    NetworkMessage(MessageType message_type)
+    NetworkMessage(MessageType message_type) noexcept
     {
         uint16_t message = static_cast<uint16_t>(message_type);
         payload << message;
     }
 
-    NetworkMessage(ENetPacket* enet_packet)
+    NetworkMessage(ENetPacket* enet_packet) noexcept
     {
         if (enet_packet)
         {
@@ -46,7 +46,7 @@ struct NetworkMessage
         }
     }
 
-    ENetPacket* to_enet_packet(ENetPacketFlag flags = ENET_PACKET_FLAG_RELIABLE)
+    ENetPacket* to_enet_packet(ENetPacketFlag flags = ENET_PACKET_FLAG_RELIABLE) const noexcept
     {
         return enet_packet_create(payload.getData(), payload.getDataSize(), flags);
     }

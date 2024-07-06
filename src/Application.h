@@ -4,7 +4,7 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Clock.hpp>
 
-
+#include "Keyboard.h"
 #include "Server.h"
 
 enum class ConnectState
@@ -24,7 +24,7 @@ struct Entity
 class Application
 {
   public:
-    Application();
+    Application(const sf::RenderWindow& window);
     ~Application();
 
     [[nodiscard]] bool init_as_host();
@@ -37,6 +37,7 @@ class Application
     void disconnect();
 
   private:
+    const sf::RenderWindow& window_;
     Server server_;
 
     ENetHost* client_ = nullptr;
@@ -48,4 +49,6 @@ class Application
     sf::RectangleShape sprite_;
 
     std::array<Entity, MAX_CLIENTS> entities_;
+
+    Keyboard keyboard_;
 };

@@ -7,6 +7,7 @@
 #include <imgui.h>
 
 #include "NetworkMessage.h"
+#include "Util/Util.h"
 
 namespace
 {
@@ -27,14 +28,15 @@ namespace
     }
 } // namespace
 
-Application::Application()
+Application::Application(const sf::RenderWindow& window)
+    : window_(window_)
 {
     sprite_.setFillColor(sf::Color::Red);
     sprite_.setSize({64, 64});
     for (auto& e : entities_)
     {
         e.sprite.setFillColor(sf::Color::Blue);
-        e.sprite.setSize({64, 64});
+        e.sprite.setSize({32, 32});
     }
 }
 
@@ -100,8 +102,9 @@ bool Application::init_as_client()
     return true;
 }
 
-void Application::on_event(const sf::RenderWindow& window, const sf::Event& e)
+void Application::on_event([[maybe_unused]] const sf::RenderWindow& window, const sf::Event& e)
 {
+    keyboard_.update(e);
 }
 
 void Application::on_update(sf::Time dt)
@@ -136,6 +139,21 @@ void Application::on_update(sf::Time dt)
                         std::cout << "A player has left.\n";
                         break;
 
+                    case ToClientMessage::Snapshot:
+                    {
+                        for (auto& player : entities_)
+                        {
+                            sf::Vector2f position;
+                            bool active;
+                            incoming_message.payload >> position.x >> position.y >> active;
+                            player.active = active;
+                            player.sprite.setPosition(position);
+                            std::cout << (int)player.active << ' ' << player.sprite.getPosition()
+                                      << '\n';
+                        }
+                    }
+                    break;
+
                     default:
                         break;
                 }
@@ -148,25 +166,29 @@ void Application::on_update(sf::Time dt)
         }
     }
 
-    // Send position
-
     constexpr int speed = 8;
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+    if (keyboard_.isKeyDown(sf::Keyboard::W))
     {
         sprite_.move({0, -speed});
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
+    if (keyboard_.isKeyDown(sf::Keyboard::A))
     {
         sprite_.move({-speed, 0});
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+    if (keyboard_.isKeyDown(sf::Keyboard::S))
     {
         sprite_.move({0, speed});
     }
-    if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
+    if (keyboard_.isKeyDown(sf::Keyboard::D))
     {
         sprite_.move({speed, 0});
     }
+
+    // Send position
+    auto& position = sprite_.getPosition();
+    ToServerNetworkMessage position_message(ToServerMessageType::Position);
+    position_message.payload << position.x << position.y;
+    enet_peer_send(peer_, 0, position_message.to_enet_packet());
 }
 
 void Application::on_fixed_update(sf::Time dt)
