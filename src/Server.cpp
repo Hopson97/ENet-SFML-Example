@@ -4,8 +4,6 @@
 
 #include "NetworkMessage.h"
 
-
-
 namespace
 {
     void reset_player_peer(ENetPeer* peer)
@@ -110,7 +108,7 @@ void Server::launch()
                 case ENET_EVENT_TYPE_DISCONNECT:
                 {
 
-                    std::cout << std::format("Client has disconnected: {}.\n", 1);
+                    std::cout << "Client has disconnected.\n";
                     reset_player_peer(event.peer);
                     ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerLeave};
                     enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
@@ -119,7 +117,7 @@ void Server::launch()
 
                 case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
                 {
-                    std::cout << std::format("Client has timeouted: {}.\n", 1);
+                    std::cout << "Client has timed-out.\n";
                     reset_player_peer(event.peer);
                     ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerLeave};
                     enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());

@@ -124,7 +124,7 @@ void Application::on_update(sf::Time dt)
                     {
                         std::string message;
                         incoming_message.payload >> message;
-                        std::cout << "Got message from server:" << message << '\n';
+                        std::cout << "Got message from server: " << message << '\n';
                     }
                     break;
 
@@ -143,25 +143,12 @@ void Application::on_update(sf::Time dt)
             }
             break;
 
-            case ENET_EVENT_TYPE_DISCONNECT:
-                std::cout << std::format("Client has disconnected: {}.\n", 1);
-                /* Reset the peer's client information. */
-                event.peer->data = nullptr;
-                break;
-
-            case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
-                std::cout << std::format("Client has timeouted: {}.\n", 1);
-                /* Reset the peer's client information. */
-                event.peer->data = nullptr;
-                break;
-
             default:
                 break;
         }
     }
 
     // Send position
-
 
     constexpr int speed = 8;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
