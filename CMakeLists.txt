@@ -15,6 +15,7 @@ add_executable(${PROJECT_NAME}
 	
     src/Util/ImGuiExtension.cpp
     src/Util/Profiler.cpp
+    src/Util/Util.cpp
 )
 
 #Set C++17

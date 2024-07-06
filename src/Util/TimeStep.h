@@ -31,7 +31,7 @@ class TimeStep
     void set_tick_rate(int new_tick_rate)
     {
         tick_rate_ = new_tick_rate;
-        sf::Time timePerUpdate_ = sf::seconds(1.f / tick_rate_);
+        timePerUpdate_ = sf::seconds(1.f / tick_rate_);
     }
 
   private:

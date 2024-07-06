@@ -67,7 +67,7 @@ bool Application::init_as_client()
                 return;
             }
 
-            ENetAddress address = {0};
+            ENetAddress address{};
             enet_address_set_host(&address, "127.0.0.1");
             address.port = 12345;
 
@@ -153,19 +153,19 @@ void Application::on_update(sf::Time dt)
     constexpr int speed = 8;
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
     {
-        sprite_.move({0, -1});
+        sprite_.move({0, -speed});
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::A))
     {
-        sprite_.move({-1, 0});
+        sprite_.move({-speed, 0});
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
     {
-        sprite_.move({0, 1});
+        sprite_.move({0, speed});
     }
     if (sf::Keyboard::isKeyPressed(sf::Keyboard::D))
     {
-        sprite_.move({1, 0});
+        sprite_.move({speed, 0});
     }
 }
 
@@ -231,6 +231,9 @@ void Application::disconnect()
                 case ENET_EVENT_TYPE_DISCONNECT:
                     std::cout << "Disconnect success\n";
                     success_disconnect = true;
+                    break;
+
+                default:
                     break;
             }
         }
