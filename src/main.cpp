@@ -12,6 +12,11 @@
 #include "Util/Profiler.h"
 #include "Util/TimeStep.h"
 
+namespace
+{
+    void handle_event(const sf::Event& e, sf::Window& window, bool& show_profiler);
+} // namespace
+
 int main()
 {
     if (enet_initialize() != 0)
@@ -44,14 +49,7 @@ int main()
         {
             ImGui::SFML::ProcessEvent(e);
             app.on_event(window, e);
-            if (e.type == sf::Event::Closed)
-            {
-                window.close();
-            }
-            else if (e.type == sf::Event::KeyReleased && e.key.code == sf::Keyboard::F1)
-            {
-                show_profiler = !show_profiler;
-            }
+            handle_event(e, window, show_profiler);
         }
         auto dt = clock.restart();
         // Update
@@ -74,7 +72,6 @@ int main()
             }
             ImGui::End();
         }
-
 
         {
             auto& update_profiler = profiler.begin_section("Update");
@@ -108,10 +105,40 @@ int main()
         window.display();
     }
 
-
-
     ImGui::SFML::Shutdown(window);
     enet_deinitialize();
 
     return EXIT_SUCCESS;
 }
+
+namespace
+{
+    void handle_event(const sf::Event& e, sf::Window& window, bool& show_profiler)
+    {
+        switch (e.type)
+        {
+            case sf::Event::Closed:
+                window.close();
+                break;
+
+            case sf::Event::KeyReleased:
+                switch (e.key.code)
+                {
+                    case sf::Keyboard::Escape:
+                        window.close();
+                        break;
+
+                    case sf::Keyboard::F1:
+                        show_profiler = !show_profiler;
+                        break;
+
+                    default:
+                        break;
+                }
+                break;
+
+            default:
+                break;
+        }
+    }
+} // namespace
