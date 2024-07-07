@@ -17,10 +17,20 @@ enum class ConnectState
 
 struct Entity
 {
+    struct PositionBuffer
+    {
+        sf::Time timestamp;
+        sf::Vector2f position;
+    };
+    std::vector<PositionBuffer> position_buffer;
+
     sf::Vector2f position;
     sf::Vector2f velocity;
     int id = -1;
     bool active = false;
+
+
+
 };
 
 class Application
@@ -55,4 +65,11 @@ class Application
     std::array<Entity, MAX_CLIENTS> entities_;
 
     Keyboard keyboard_;
+
+    struct Config
+    {
+        bool do_interpolation = true;
+    } config_;
+
+    sf::Clock game_time_;
 };

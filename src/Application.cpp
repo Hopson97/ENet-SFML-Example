@@ -142,7 +142,16 @@ void Application::on_update(sf::Time dt)
                             incoming_message.payload >> ticks >> player.id >> position.x >>
                                 position.y >> player.active;
 
-                            player.position = position;
+                            if (config_.do_interpolation)
+                            {
+                                player.position_buffer.push_back(
+                                    {.timestamp = game_time_.getElapsedTime(),
+                                     .position = position});
+                            }
+                            else
+                            {
+                                player.position = position;
+                            }
                         }
                     }
                     break;
@@ -186,6 +195,42 @@ void Application::on_update(sf::Time dt)
     ToServerNetworkMessage position_message(ToServerMessageType::Position);
     position_message.payload << position_.x << position_.y;
     enet_peer_send(peer_, 0, position_message.to_enet_packet());
+
+    if (config_.do_interpolation)
+    {
+        auto now = game_time_.getElapsedTime();
+        auto render_ts = (now - sf::milliseconds(1000.0f / 50.0f)).asSeconds() / 1000.0f;
+
+        for (auto& entity : entities_)
+        {
+            if (!entity.active || entity.position_buffer.size() < 2)
+            {
+                continue;
+            }
+            auto& buffer = entity.position_buffer;
+
+            while (buffer.size() > 2)
+            {
+                buffer.erase(buffer.begin());
+            } 
+
+
+            const auto t0 = buffer[0].timestamp.asSeconds() / 1000.0f;
+            const auto t1 = buffer[1].timestamp.asSeconds() / 1000.0f;
+
+            if (t0 <= render_ts && render_ts <= t1)
+            {
+                const auto& p0 = buffer[0].position;
+                const auto& p1 = buffer[1].position;
+
+                auto t = ((render_ts - t0) / (t1 - t0));
+                float nx = std::lerp(p0.x, p1.x, t);
+                float ny = std::lerp(p0.y, p1.y, t);
+
+                entity.position = {nx, ny};
+            }
+        }
+    }
 }
 
 void Application::on_fixed_update(sf::Time dt)
@@ -223,6 +268,10 @@ void Application::on_render(sf::RenderWindow& window)
                 enet_peer_send(peer_, 0, outgoing_message.to_enet_packet());
                 enet_host_flush(client_);
             }
+
+            ImGui::Separator();
+            ImGui::Text("Config Options");
+            ImGui::Checkbox("Interpolation: ", &config_.do_interpolation);
         }
     }
     ImGui::End();
