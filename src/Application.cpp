@@ -31,13 +31,6 @@ namespace
 Application::Application(const sf::RenderWindow& window)
     : window_(window_)
 {
-    sprite_.setFillColor(sf::Color::Red);
-    sprite_.setSize({64, 64});
-    for (auto& e : entities_)
-    {
-        e.sprite.setFillColor(sf::Color::Blue);
-        e.sprite.setSize({32, 32});
-    }
 }
 
 Application::~Application()
@@ -143,13 +136,13 @@ void Application::on_update(sf::Time dt)
                     {
                         for (auto& player : entities_)
                         {
+                            // Read state from the packet
+                            int ticks;
                             sf::Vector2f position;
-                            bool active;
-                            incoming_message.payload >> position.x >> position.y >> active;
-                            player.active = active;
-                            player.sprite.setPosition(position);
-                            std::cout << (int)player.active << ' ' << player.sprite.getPosition()
-                                      << '\n';
+                            incoming_message.payload >> ticks >> player.id >> position.x >>
+                                position.y >> player.active;
+
+                            player.position = position;
                         }
                     }
                     break;
@@ -166,33 +159,50 @@ void Application::on_update(sf::Time dt)
         }
     }
 
-    constexpr int speed = 8;
+    constexpr float speed = 25;
+    constexpr float MAX_SPEED = 256;
     if (keyboard_.isKeyDown(sf::Keyboard::W))
     {
-        sprite_.move({0, -speed});
+        velocity_ += sf::Vector2f{0, -speed};
     }
     if (keyboard_.isKeyDown(sf::Keyboard::A))
     {
-        sprite_.move({-speed, 0});
+        velocity_ += {-speed, 0};
     }
     if (keyboard_.isKeyDown(sf::Keyboard::S))
     {
-        sprite_.move({0, speed});
+        velocity_ += {0, speed};
     }
     if (keyboard_.isKeyDown(sf::Keyboard::D))
     {
-        sprite_.move({speed, 0});
+        velocity_ += {speed, 0};
     }
 
+    velocity_.x = std::clamp(velocity_.x, -MAX_SPEED, MAX_SPEED) * 0.94f;
+    velocity_.y = std::clamp(velocity_.y, -MAX_SPEED, MAX_SPEED) * 0.94f;
+    position_ += velocity_ * dt.asSeconds();
+
     // Send position
-    auto& position = sprite_.getPosition();
     ToServerNetworkMessage position_message(ToServerMessageType::Position);
-    position_message.payload << position.x << position.y;
+    position_message.payload << position_.x << position_.y;
     enet_peer_send(peer_, 0, position_message.to_enet_packet());
 }
 
 void Application::on_fixed_update(sf::Time dt)
 {
+    // auto diff = (current_ - last_).asSeconds() / 10;
+    // for (int i = 0; i < MAX_CLIENTS; i++)
+    //{
+    //     auto current = entities_last_[i].sprite.getPosition();
+    //     auto next = entities_server_[i].sprite.getPosition();
+
+    //    auto predict_x = std::lerp(current.x, next.x, step_);
+    //    auto predict_y = std::lerp(current.y, next.y, step_);
+    //    step_ += diff;
+
+    //    entities_[i].sprite.setPosition(predict_x, predict_y);
+    //    entities_[i].active = entities_server_[i].active;
+    //}
 }
 
 void Application::on_render(sf::RenderWindow& window)
@@ -222,12 +232,21 @@ void Application::on_render(sf::RenderWindow& window)
         return;
     }
 
+    // Draw player
+    sprite_.setPosition(position_);
+    sprite_.setFillColor(sf::Color::Red);
+    sprite_.setSize({64, 64});
     window.draw(sprite_);
+
+    // Draw entities
+    sprite_.setFillColor(sf::Color::Blue);
+    sprite_.setSize({32, 32});
     for (auto& e : entities_)
     {
         if (e.active)
         {
-            window.draw(e.sprite);
+            sprite_.setPosition(e.position);
+            window.draw(sprite_);
         }
     }
 }

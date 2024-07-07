@@ -24,6 +24,14 @@ namespace
     }
 } // namespace
 
+Server::Server()
+{
+    for (int i = 0; i < players_.size(); i++)
+    {
+        players_[i].id = i;
+    }
+}
+
 Server::~Server()
 {
     stop();
@@ -54,13 +62,12 @@ void Server::launch()
 
         if (++ticks % 20 == 0)
         {
-            // std::cout << "Ticks: " << ticks << " (" << ticks / 20 << " seconds)" << '\n';
+            std::cout << "Ticks: " << ticks << " (" << ticks / 20 << " seconds)" << '\n';
         }
 
         ENetEvent event;
         while (enet_host_service(server_, &event, 0) > 0)
         {
-            std::cout << "Got event\n";
             switch (event.type)
             {
                 case ENET_EVENT_TYPE_CONNECT:
@@ -95,7 +102,6 @@ void Server::launch()
                             std::string text;
                             incoming_message.payload >> text;
                             std::cout << "Got message from client: " << text << '\n';
-                            std::cout << "Slot: " << event.peer << '\n';
 
                             ToClientNetworkMessage outgoing_message{ToClientMessage::Message};
                             outgoing_message.payload << text;
@@ -108,7 +114,6 @@ void Server::launch()
                         {
                             auto player = (ServerPlayer*)event.peer->data;
                             incoming_message.payload >> player->position.x >> player->position.y;
-                            std::cout << player->position << " received....\n";
                         }
                         break;
 
@@ -146,11 +151,7 @@ void Server::launch()
         ToClientNetworkMessage snapshot(ToClientMessage::Snapshot);
         for (const auto& player : players_)
         {
-            if (player.peer)
-            {
-                std::cout << "Payload " << player.position << '\n';
-            }
-            snapshot.payload << player.position.x << player.position.y
+            snapshot.payload << ticks << player.id << player.position.x << player.position.y
                              << (player.peer ? true : false);
         }
         enet_host_broadcast(server_, 0, snapshot.to_enet_packet());

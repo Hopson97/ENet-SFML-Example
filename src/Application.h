@@ -17,7 +17,9 @@ enum class ConnectState
 
 struct Entity
 {
-    sf::RectangleShape sprite;
+    sf::Vector2f position;
+    sf::Vector2f velocity;
+    int id = -1;
     bool active = false;
 };
 
@@ -47,6 +49,8 @@ class Application
     std::jthread connect_thread_;
 
     sf::RectangleShape sprite_;
+    sf::Vector2f position_;
+    sf::Vector2f velocity_;
 
     std::array<Entity, MAX_CLIENTS> entities_;
 

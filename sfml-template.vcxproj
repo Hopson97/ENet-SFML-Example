@@ -151,6 +151,7 @@
     <ClCompile Include="deps\enet\enet_impl.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="deps\imgui_sfml\imgui-SFML.cpp" />
+    <ClCompile Include="src\Keyboard.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Server.cpp" />
     <ClCompile Include="src\Util\ImGuiExtension.cpp" />
@@ -179,6 +180,7 @@
     <ClInclude Include="deps\imgui_sfml\imconfig-SFML.h" />
     <ClInclude Include="deps\imgui_sfml\imgui-SFML.h" />
     <ClInclude Include="deps\imgui_sfml\imgui-SFML_export.h" />
+    <ClInclude Include="src\Keyboard.h" />
     <ClInclude Include="src\NetworkMessage.h" />
     <ClInclude Include="src\Server.h" />
     <ClInclude Include="src\Util\Array2D.h" />
