@@ -199,7 +199,7 @@ void Application::on_update(sf::Time dt)
     if (config_.do_interpolation)
     {
         auto now = game_time_.getElapsedTime();
-        auto render_ts = (now - sf::milliseconds(1000.0f / 50.0f)).asSeconds() / 1000.0f;
+        auto render_ts = (now - sf::milliseconds(1000.0f / 50.0f));
 
         for (auto& entity : entities_)
         {
@@ -212,11 +212,10 @@ void Application::on_update(sf::Time dt)
             while (buffer.size() > 2)
             {
                 buffer.erase(buffer.begin());
-            } 
+            }
 
-
-            const auto t0 = buffer[0].timestamp.asSeconds() / 1000.0f;
-            const auto t1 = buffer[1].timestamp.asSeconds() / 1000.0f;
+            const auto t0 = buffer[0].timestamp;
+            const auto t1 = buffer[1].timestamp;
 
             if (t0 <= render_ts && render_ts <= t1)
             {
@@ -288,8 +287,7 @@ void Application::on_render(sf::RenderWindow& window)
     window.draw(sprite_);
 
     // Draw entities
-    sprite_.setFillColor(sf::Color::Blue);
-    sprite_.setSize({32, 32});
+    sprite_.setFillColor({255, 0, 255, 100});
     for (auto& e : entities_)
     {
         if (e.active)
