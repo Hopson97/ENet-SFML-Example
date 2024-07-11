@@ -58,7 +58,7 @@ void Server::launch()
     running_ = true;
     while (running_)
     {
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
+        std::this_thread::sleep_for(std::chrono::milliseconds((int)SERVER_TPS));
 
         if (++ticks % 20 == 0)
         {
@@ -88,7 +88,7 @@ void Server::launch()
                         }
                     }
                     ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerJoin};
-                    enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
+                    enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet((ENetPacketFlag)0));
                 }
                 break;
 

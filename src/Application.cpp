@@ -134,6 +134,7 @@ void Application::on_update(sf::Time dt)
 
                     case ToClientMessage::Snapshot:
                     {
+                        std::cout << "got interpolation..\n";
                         for (auto& player : entities_)
                         {
                             // Read state from the packet
@@ -194,13 +195,19 @@ void Application::on_update(sf::Time dt)
     // Send position
     ToServerNetworkMessage position_message(ToServerMessageType::Position);
     position_message.payload << position_.x << position_.y;
-    enet_peer_send(peer_, 0, position_message.to_enet_packet());
+    enet_peer_send(peer_, 0, position_message.to_enet_packet((ENetPacketFlag)0));
+
+    // Deubgging t
+    static std::vector<float> rts;
+    static std::vector<float> ts;
+    static std::vector<float> t0s;
+    static std::vector<float> t1s;
 
     if (config_.do_interpolation)
     {
+        std::cout << "doing interpolation..\n";
         auto now = game_time_.getElapsedTime();
-        auto render_ts = (now - sf::milliseconds(1000.0f / 50.0f));
-
+        auto render_ts = (now - sf::milliseconds(1000.0f / SERVER_TPS) * 8.0f);
         for (auto& entity : entities_)
         {
             if (!entity.active || entity.position_buffer.size() < 2)
@@ -209,7 +216,9 @@ void Application::on_update(sf::Time dt)
             }
             auto& buffer = entity.position_buffer;
 
-            while (buffer.size() > 2)
+
+
+            while (buffer.size() > 2 && buffer[1].timestamp <= render_ts)
             {
                 buffer.erase(buffer.begin());
             }
@@ -226,9 +235,65 @@ void Application::on_update(sf::Time dt)
                 float nx = std::lerp(p0.x, p1.x, t);
                 float ny = std::lerp(p0.y, p1.y, t);
 
+                // Debug t
+                ts.push_back(t);
+                t0s.push_back(t0.asSeconds());
+                t1s.push_back(t1.asSeconds());
+                rts.push_back(render_ts.asSeconds());
+
                 entity.position = {nx, ny};
             }
         }
+
+        while (ts.size() > 10)
+        {
+            ts.erase(ts.begin());
+        }
+        while (rts.size() > 10)
+        {
+            rts.erase(rts.begin());
+        }
+        while (t0s.size() > 10)
+        {
+            t0s.erase(t0s.begin());
+        }
+        while (t1s.size() > 10)
+        {
+            t1s.erase(t1s.begin());
+        }
+
+        if (ImGui::Begin("Connect status."))
+        {
+            if (ImGui::BeginTable("split", 4))
+            {
+                ImGui::TableNextColumn();
+                for (auto t : ts)
+                {
+                    ImGui::Text("%f", t);
+                }
+
+                ImGui::TableNextColumn();
+                for (auto t : t0s)
+                {
+                    ImGui::Text("%f", t);
+                }
+
+                ImGui::TableNextColumn();
+                for (auto t : t1s)
+                {
+                    ImGui::Text("%f", t);
+                }
+
+                ImGui::TableNextColumn();
+                for (auto t : rts)
+                {
+                    ImGui::Text("%f", t);
+                }
+
+                ImGui::EndTable();
+            }
+        }
+        ImGui::End();
     }
 }
 

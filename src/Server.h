@@ -9,7 +9,9 @@
 #include <SFML/System/Time.hpp>
 
 
-constexpr int MAX_CLIENTS = 5;
+constexpr int MAX_CLIENTS = 4;
+constexpr float SERVER_TICK_RATE = 20;
+constexpr float SERVER_TPS = 1000 / SERVER_TICK_RATE;
 
 struct ServerPlayer
 {
