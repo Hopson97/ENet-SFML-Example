@@ -15,10 +15,11 @@ namespace
             return;
         }
 
-        auto player = (ServerPlayer*)peer->data;
+        auto player = (ServerEntity*)peer->data;
         if (player)
         {
             player->peer = nullptr;
+            player->common.active = false;
         }
         peer->data = nullptr;
     }
@@ -26,9 +27,10 @@ namespace
 
 Server::Server()
 {
-    for (int i = 0; i < players_.size(); i++)
+    for (int i = 0; i < entities_.size(); i++)
     {
-        players_[i].id = i;
+        entities_[i].id = i;
+        entities_[i].common.active = i >= MAX_CLIENTS;
     }
 }
 
@@ -77,20 +79,19 @@ void Server::launch()
                     // Port -> event.peer->address.port
                     std::cout << "[Server] A new client connected.\n";
                     i16 id = 0;
-                    for (auto& player : players_)
+                    for (int i = 0; i < MAX_CLIENTS; i++)
                     {
                         std::cout << "[Server] Finding a slot...\n";
-                        if (!player.peer)
+                        if (!entities_[i].peer)
                         {
-                            id = player.id;
-                            player.peer = event.peer;
-                            event.peer->data = (void*)&player;
-                            std::cout << "[Server] Slot: " << (int)player.id << '\n';
-                            id = player.id;
+                            id = entities_[i].id;
+                            entities_[i].peer = event.peer;
+                            entities_[i].common.active = true;
+                            event.peer->data = (void*)&entities_[i];
+                            std::cout << "[Server] Slot: " << (int)entities_[i].id << '\n';
                             break;
                         }
                     }
-                    std::cout << id << std::endl;
                     ToClientNetworkMessage client_id{ToClientMessage::ClientInfo};
                     client_id.payload << id;
                     enet_peer_send(event.peer, 0, client_id.to_enet_packet());
@@ -122,11 +123,11 @@ void Server::launch()
                         {
                             Input input;
                             u32 sequence = 0;
-                            auto player = (ServerPlayer*)event.peer->data;
+                            auto player = (ServerEntity*)event.peer->data;
 
                             incoming_message.payload >> sequence >> input.dt >> input.keys;
 
-                            process_input_for_player(player->transform, input);
+                            process_input_for_player(player->common.transform, input);
 
                             // incoming_message.payload >> player->transform.position.x >>
                             //     player->transform.position.y;
@@ -164,11 +165,31 @@ void Server::launch()
             }
         }
 
-        ToClientNetworkMessage snapshot(ToClientMessage::Snapshot);
-        for (const auto& player : players_)
+        constexpr static float ENTITY_MAX_SPEED = 150.0f;
+        for (int i = MAX_CLIENTS; i < MAX_ENTITIES; i++)
         {
-            snapshot.payload << player.id << player.transform.position.x
-                             << player.transform.position.y << (player.peer ? true : false);
+            auto& entity = entities_[i];
+            auto& entity_transform = entity.common.transform;
+            auto& player_position = entities_[0].common.transform.position;
+
+            auto diff = player_position - entity_transform.position;
+
+            auto len = std::sqrt(diff.x * diff.x + diff.y * diff.y);
+            auto move = diff / (len == 0 ? 1 : len);
+
+            auto& velocity = entity_transform.velocity;
+            velocity += move * (2.0f + static_cast<float>(i) / 100.0f);
+
+            velocity.x = std::clamp(velocity.x, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
+            velocity.y = std::clamp(velocity.y, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
+            entity_transform.position += velocity;
+        }
+
+        ToClientNetworkMessage snapshot(ToClientMessage::Snapshot);
+        for (const auto& entity : entities_)
+        {
+            snapshot.payload << entity.id << entity.common.transform.position.x
+                             << entity.common.transform.position.y << entity.common.active;
         }
         enet_host_broadcast(server_, 0, snapshot.to_enet_packet());
     }

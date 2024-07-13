@@ -26,9 +26,7 @@ struct Entity
     };
     std::vector<PositionBuffer> position_buffer;
 
-    EntityTransform transform;
-    i16 id = -1;
-    bool active = false;
+    EntityCommon common;
 };
 
 class Application
@@ -67,7 +65,7 @@ class Application
     i16 player_id_ = 0;
 
     /// All entities
-    std::array<Entity, MAX_CLIENTS> entities_;
+    std::array<Entity, MAX_ENTITIES> entities_;
 
     u32 input_sequence_ = 0;
     Keyboard keyboard_;

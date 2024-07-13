@@ -20,7 +20,7 @@ namespace
             case ConnectState::Connected:
                 return "Connected";
             case ConnectState::Connecting:
-                return "Connecting...";
+                return "Connecting..";
             case ConnectState::ConnectFailed:
                 return "Connection failed";
         }
@@ -75,7 +75,7 @@ bool Application::init_as_client()
                 return;
             }
 
-            // Await for success...
+            // Await for success..
             ENetEvent event;
             if (enet_host_service(client_, &event, 5000) > 0 &&
                 event.type == ENET_EVENT_TYPE_CONNECT)
@@ -139,28 +139,28 @@ void Application::on_update(sf::Time dt)
 
                     case ToClientMessage::Snapshot:
                     {
-                        for (auto& player : entities_)
+                        for (auto& entity : entities_)
                         {
                             // Read state from the packet - TODO seperate this logic out from the
                             // looping of players
                             sf::Vector2f position;
-                            incoming_message.payload >> player.id >> position.x >> position.y >>
-                                player.active;
-                            if (player.id == player_id_)
+                            incoming_message.payload >> entity.common.id >> position.x >>
+                                position.y >> entity.common.active;
+                            if (entity.common.id == player_id_)
                             {
-                                entities_[(size_t)player_id_].transform.position = position;
+                                entities_[(size_t)player_id_].common.transform.position = position;
                             }
-                            else if (player.active)
+                            else if (entity.common.active)
                             {
                                 if (config_.do_interpolation)
                                 {
-                                    player.position_buffer.push_back(
+                                    entity.position_buffer.push_back(
                                         {.timestamp = game_time_.getElapsedTime(),
                                          .position = position});
                                 }
                                 else
                                 {
-                                    player.transform.position = position;
+                                    entity.common.transform.position = position;
                                 }
                             }
                         }
@@ -212,7 +212,7 @@ void Application::on_update(sf::Time dt)
     // process the input
     if (config_.client_side_prediction_)
     {
-        process_input_for_player(entities_[(size_t)player_id_].transform, inputs);
+        process_input_for_player(entities_[(size_t)player_id_].common.transform, inputs);
     }
 
     // Deubgging t
@@ -227,7 +227,8 @@ void Application::on_update(sf::Time dt)
         auto render_ts = (now - sf::milliseconds(1000.0f / SERVER_TPS) * 4.0f);
         for (auto& entity : entities_)
         {
-            if (!entity.active || entity.position_buffer.size() < 2 || player_id_ == entity.id)
+            if (!entity.common.active || entity.position_buffer.size() < 2 ||
+                player_id_ == entity.common.id)
             {
                 continue;
             }
@@ -256,7 +257,7 @@ void Application::on_update(sf::Time dt)
                 t1s.push_back(t1.asSeconds());
                 rts.push_back(render_ts.asSeconds());
 
-                entity.transform.position = {nx, ny};
+                entity.common.transform.position = {nx, ny};
             }
         }
         /*
@@ -354,7 +355,7 @@ void Application::on_render(sf::RenderWindow& window)
     }
 
     // Draw player
-    sprite_.setPosition(entities_[(size_t)player_id_].transform.position);
+    sprite_.setPosition(entities_[(size_t)player_id_].common.transform.position);
     sprite_.setFillColor(sf::Color::Red);
     sprite_.setSize({32, 32});
     window.draw(sprite_);
@@ -363,9 +364,9 @@ void Application::on_render(sf::RenderWindow& window)
     sprite_.setFillColor({255, 0, 255, 100});
     for (auto& e : entities_)
     {
-        if (e.id != player_id_ && e.active)
+        if (e.common.id != player_id_ && e.common.active)
         {
-            sprite_.setPosition(e.transform.position);
+            sprite_.setPosition(e.common.transform.position);
             window.draw(sprite_);
         }
     }

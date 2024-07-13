@@ -43,4 +43,11 @@ struct EntityTransform
     sf::Vector2f velocity;
 };
 
+struct EntityCommon
+{
+    EntityTransform transform;
+    i16 id = -1;
+    bool active;
+};
+
 void process_input_for_player(EntityTransform& transform, const Input& input) noexcept;

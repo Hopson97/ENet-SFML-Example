@@ -12,14 +12,15 @@
 
 
 constexpr int MAX_CLIENTS = 4;
+constexpr int MAX_ENTITIES = 1000;
 constexpr float SERVER_TICK_RATE = 20;
 constexpr float SERVER_TPS = 1000 / SERVER_TICK_RATE;
 
-struct ServerPlayer
+struct ServerEntity
 {
     i16 id = -1;
-    ENetPeer* peer = nullptr;
-    EntityTransform transform;
+    ENetPeer* peer = nullptr; 
+    EntityCommon common;
 };
 
 class Server
@@ -46,5 +47,5 @@ class Server
     // Network stuff
     ENetHost* server_ = nullptr;
 
-    std::array<ServerPlayer, MAX_CLIENTS> players_;
+    std::array<ServerEntity, MAX_ENTITIES> entities_;
 };
