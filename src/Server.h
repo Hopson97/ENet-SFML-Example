@@ -8,6 +8,8 @@
 #include <SFML/System/Vector2.hpp>
 #include <SFML/System/Time.hpp>
 
+#include "Common.h"
+
 
 constexpr int MAX_CLIENTS = 4;
 constexpr float SERVER_TICK_RATE = 20;
@@ -17,18 +19,7 @@ struct ServerPlayer
 {
     int id = -1;
     ENetPeer* peer = nullptr;
-    sf::Vector2f position;
-};
-
-struct Entity2
-{
-    struct PositionBuffer
-    {
-        sf::Time timestamp;
-        sf::Vector2f position;
-    };
-
-    std::array<PositionBuffer, 2> position_buffer;
+    EntityTransform transform;
 };
 
 class Server

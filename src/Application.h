@@ -4,6 +4,7 @@
 #include <SFML/Graphics/RenderWindow.hpp>
 #include <SFML/System/Clock.hpp>
 
+#include "Common.h"
 #include "Keyboard.h"
 #include "Server.h"
 
@@ -24,13 +25,9 @@ struct Entity
     };
     std::vector<PositionBuffer> position_buffer;
 
-    sf::Vector2f position;
-    sf::Vector2f velocity;
+    EntityTransform transform;
     int id = -1;
     bool active = false;
-
-
-
 };
 
 class Application
@@ -39,8 +36,8 @@ class Application
     Application(const sf::RenderWindow& window);
     ~Application();
 
-    [[nodiscard]] bool init_as_host();
-    [[nodiscard]] bool init_as_client();
+    bool init_as_host();
+    bool init_as_client();
 
     void on_event(const sf::RenderWindow& window, const sf::Event& e);
     void on_update(sf::Time dt);

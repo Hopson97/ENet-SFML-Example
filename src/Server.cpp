@@ -88,7 +88,8 @@ void Server::launch()
                         }
                     }
                     ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerJoin};
-                    enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet((ENetPacketFlag)0));
+                    enet_host_broadcast(server_, 0,
+                                        outgoing_message.to_enet_packet((ENetPacketFlag)0));
                 }
                 break;
 
@@ -113,7 +114,8 @@ void Server::launch()
                         case ToServerMessageType::Position:
                         {
                             auto player = (ServerPlayer*)event.peer->data;
-                            incoming_message.payload >> player->position.x >> player->position.y;
+                            incoming_message.payload >> player->transform.position.x >>
+                                player->transform.position.y;
                         }
                         break;
 
@@ -151,8 +153,8 @@ void Server::launch()
         ToClientNetworkMessage snapshot(ToClientMessage::Snapshot);
         for (const auto& player : players_)
         {
-            snapshot.payload << ticks << player.id << player.position.x << player.position.y
-                             << (player.peer ? true : false);
+            snapshot.payload << ticks << player.id << player.transform.position.x
+                             << player.transform.position.y << (player.peer ? true : false);
         }
         enet_host_broadcast(server_, 0, snapshot.to_enet_packet());
     }

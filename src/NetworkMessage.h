@@ -3,7 +3,9 @@
 #include <SFML/Network/Packet.hpp>
 #include <enet/enet.h>
 
-enum class ToServerMessageType : uint16_t
+#include "Common.h"
+
+enum class ToServerMessageType : u8
 {
     None,
     Message,
@@ -11,7 +13,7 @@ enum class ToServerMessageType : uint16_t
     Position,
 };
 
-enum class ToClientMessage : uint16_t
+enum class ToClientMessage : u8
 {
     None,
 

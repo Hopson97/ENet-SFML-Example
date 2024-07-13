@@ -134,7 +134,6 @@ void Application::on_update(sf::Time dt)
 
                     case ToClientMessage::Snapshot:
                     {
-                        std::cout << "got interpolation..\n";
                         for (auto& player : entities_)
                         {
                             // Read state from the packet
@@ -151,7 +150,7 @@ void Application::on_update(sf::Time dt)
                             }
                             else
                             {
-                                player.position = position;
+                                player.transform.position = position;
                             }
                         }
                     }
@@ -169,25 +168,32 @@ void Application::on_update(sf::Time dt)
         }
     }
 
+    Input inputs;
+
     constexpr float speed = 25;
     constexpr float MAX_SPEED = 256;
     if (keyboard_.isKeyDown(sf::Keyboard::W))
     {
+        inputs.keys |= KeyPress::W;
         velocity_ += sf::Vector2f{0, -speed};
     }
     if (keyboard_.isKeyDown(sf::Keyboard::A))
     {
+        inputs.keys |= KeyPress::A;
         velocity_ += {-speed, 0};
     }
     if (keyboard_.isKeyDown(sf::Keyboard::S))
     {
+        inputs.keys |= KeyPress::S;
         velocity_ += {0, speed};
     }
     if (keyboard_.isKeyDown(sf::Keyboard::D))
     {
+        inputs.keys |= KeyPress::D;
         velocity_ += {speed, 0};
     }
 
+    
     velocity_.x = std::clamp(velocity_.x, -MAX_SPEED, MAX_SPEED) * 0.94f;
     velocity_.y = std::clamp(velocity_.y, -MAX_SPEED, MAX_SPEED) * 0.94f;
     position_ += velocity_ * dt.asSeconds();
@@ -196,7 +202,9 @@ void Application::on_update(sf::Time dt)
     ToServerNetworkMessage position_message(ToServerMessageType::Position);
     position_message.payload << position_.x << position_.y;
     enet_peer_send(peer_, 0, position_message.to_enet_packet((ENetPacketFlag)0));
+    
 
+    
     // Deubgging t
     static std::vector<float> rts;
     static std::vector<float> ts;
@@ -205,9 +213,8 @@ void Application::on_update(sf::Time dt)
 
     if (config_.do_interpolation)
     {
-        std::cout << "doing interpolation..\n";
         auto now = game_time_.getElapsedTime();
-        auto render_ts = (now - sf::milliseconds(1000.0f / SERVER_TPS) * 8.0f);
+        auto render_ts = (now - sf::milliseconds(1000.0f / SERVER_TPS) * 4.0f);
         for (auto& entity : entities_)
         {
             if (!entity.active || entity.position_buffer.size() < 2)
@@ -241,7 +248,7 @@ void Application::on_update(sf::Time dt)
                 t1s.push_back(t1.asSeconds());
                 rts.push_back(render_ts.asSeconds());
 
-                entity.position = {nx, ny};
+                entity.transform.position = {nx, ny};
             }
         }
 
@@ -262,29 +269,33 @@ void Application::on_update(sf::Time dt)
             t1s.erase(t1s.begin());
         }
 
-        if (ImGui::Begin("Connect status."))
+        if (ImGui::Begin("Times."))
         {
             if (ImGui::BeginTable("split", 4))
             {
                 ImGui::TableNextColumn();
+                ImGui::Text("T");
                 for (auto t : ts)
                 {
                     ImGui::Text("%f", t);
                 }
 
                 ImGui::TableNextColumn();
+                ImGui::Text("T0");
                 for (auto t : t0s)
                 {
                     ImGui::Text("%f", t);
                 }
 
                 ImGui::TableNextColumn();
+                ImGui::Text("T1");
                 for (auto t : t1s)
                 {
                     ImGui::Text("%f", t);
                 }
 
                 ImGui::TableNextColumn();
+                ImGui::Text("Render Timestamp");
                 for (auto t : rts)
                 {
                     ImGui::Text("%f", t);
@@ -299,25 +310,13 @@ void Application::on_update(sf::Time dt)
 
 void Application::on_fixed_update(sf::Time dt)
 {
-    // auto diff = (current_ - last_).asSeconds() / 10;
-    // for (int i = 0; i < MAX_CLIENTS; i++)
-    //{
-    //     auto current = entities_last_[i].sprite.getPosition();
-    //     auto next = entities_server_[i].sprite.getPosition();
 
-    //    auto predict_x = std::lerp(current.x, next.x, step_);
-    //    auto predict_y = std::lerp(current.y, next.y, step_);
-    //    step_ += diff;
-
-    //    entities_[i].sprite.setPosition(predict_x, predict_y);
-    //    entities_[i].active = entities_server_[i].active;
-    //}
 }
 
 void Application::on_render(sf::RenderWindow& window)
 {
     static char message[128];
-    if (ImGui::Begin("Connect status."))
+    if (ImGui::Begin("Connect status + Debug"))
     {
         ImGui::Text("%s", connect_state_to_string(connect_state_));
 
@@ -348,7 +347,7 @@ void Application::on_render(sf::RenderWindow& window)
     // Draw player
     sprite_.setPosition(position_);
     sprite_.setFillColor(sf::Color::Red);
-    sprite_.setSize({64, 64});
+    sprite_.setSize({32, 32});
     window.draw(sprite_);
 
     // Draw entities
@@ -357,7 +356,7 @@ void Application::on_render(sf::RenderWindow& window)
     {
         if (e.active)
         {
-            sprite_.setPosition(e.position);
+            sprite_.setPosition(e.transform.position);
             window.draw(sprite_);
         }
     }
@@ -367,7 +366,6 @@ void Application::disconnect()
 {
     if (peer_)
     {
-        std::cout << "Disconnecting\n";
         enet_peer_disconnect(peer_, 0);
 
         // Wait for the disconnect to complete.
