@@ -22,7 +22,7 @@ using i64 = int64_t;
   * 
   */
 
-enum KeyPress
+enum InputKeyPress
 {
     NONE = 0,
     W = 1,
@@ -33,7 +33,8 @@ enum KeyPress
 
 struct Input
 {
-    u8 keys = KeyPress::NONE;
+    float dt = 0;
+    u8 keys = InputKeyPress::NONE;
 };
 
 struct EntityTransform
@@ -41,3 +42,5 @@ struct EntityTransform
     sf::Vector2f position;
     sf::Vector2f velocity;
 };
+
+void process_input_for_player(EntityTransform& transform, const Input& input) noexcept;

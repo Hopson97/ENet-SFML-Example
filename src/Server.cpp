@@ -111,11 +111,19 @@ void Server::launch()
                         }
                         break;
 
-                        case ToServerMessageType::Position:
+                        case ToServerMessageType::Input:
                         {
+                            Input input;
+                            u32 sequence = 0;
                             auto player = (ServerPlayer*)event.peer->data;
-                            incoming_message.payload >> player->transform.position.x >>
-                                player->transform.position.y;
+                            
+                            incoming_message.payload >> sequence >> input.dt >> input.keys;
+
+                            process_input_for_player(player->transform, input);
+
+
+                            //incoming_message.payload >> player->transform.position.x >>
+                            //    player->transform.position.y;
                         }
                         break;
 

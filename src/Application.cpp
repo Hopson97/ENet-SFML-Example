@@ -116,6 +116,11 @@ void Application::on_update(sf::Time dt)
                 ToClientNetworkMessage incoming_message(event.packet);
                 switch (incoming_message.message_type)
                 {
+                    case ToClientMessage::ClientInfo:
+                    {
+
+                    }
+    
                     case ToClientMessage::Message:
                     {
                         std::string message;
@@ -150,8 +155,11 @@ void Application::on_update(sf::Time dt)
                             }
                             else
                             {
+                               // std::cout << player_.position << '\n';
+                                player_.position = position;
                                 player.transform.position = position;
                             }
+                            break;
                         }
                     }
                     break;
@@ -168,43 +176,33 @@ void Application::on_update(sf::Time dt)
         }
     }
 
-    Input inputs;
+    Input inputs{.dt = dt.asSeconds()};
 
     constexpr float speed = 25;
     constexpr float MAX_SPEED = 256;
     if (keyboard_.isKeyDown(sf::Keyboard::W))
     {
-        inputs.keys |= KeyPress::W;
-        velocity_ += sf::Vector2f{0, -speed};
+        inputs.keys |= InputKeyPress::W;
     }
     if (keyboard_.isKeyDown(sf::Keyboard::A))
     {
-        inputs.keys |= KeyPress::A;
-        velocity_ += {-speed, 0};
+        inputs.keys |= InputKeyPress::A;
     }
     if (keyboard_.isKeyDown(sf::Keyboard::S))
     {
-        inputs.keys |= KeyPress::S;
-        velocity_ += {0, speed};
+        inputs.keys |= InputKeyPress::S;
     }
     if (keyboard_.isKeyDown(sf::Keyboard::D))
     {
-        inputs.keys |= KeyPress::D;
-        velocity_ += {speed, 0};
+        inputs.keys |= InputKeyPress::D;
     }
 
-    
-    velocity_.x = std::clamp(velocity_.x, -MAX_SPEED, MAX_SPEED) * 0.94f;
-    velocity_.y = std::clamp(velocity_.y, -MAX_SPEED, MAX_SPEED) * 0.94f;
-    position_ += velocity_ * dt.asSeconds();
+    ToServerNetworkMessage input_message(ToServerMessageType::Input);
+    input_message.payload << input_sequence_ << inputs.dt << inputs.keys;
+    enet_peer_send(peer_, 0, input_message.to_enet_packet((ENetPacketFlag)0));
 
-    // Send position
-    ToServerNetworkMessage position_message(ToServerMessageType::Position);
-    position_message.payload << position_.x << position_.y;
-    enet_peer_send(peer_, 0, position_message.to_enet_packet((ENetPacketFlag)0));
-    
+    process_input_for_player(player_, inputs);
 
-    
     // Deubgging t
     static std::vector<float> rts;
     static std::vector<float> ts;
@@ -222,8 +220,6 @@ void Application::on_update(sf::Time dt)
                 continue;
             }
             auto& buffer = entity.position_buffer;
-
-
 
             while (buffer.size() > 2 && buffer[1].timestamp <= render_ts)
             {
@@ -310,7 +306,6 @@ void Application::on_update(sf::Time dt)
 
 void Application::on_fixed_update(sf::Time dt)
 {
-
 }
 
 void Application::on_render(sf::RenderWindow& window)
@@ -345,7 +340,7 @@ void Application::on_render(sf::RenderWindow& window)
     }
 
     // Draw player
-    sprite_.setPosition(position_);
+    sprite_.setPosition(player_.position);
     sprite_.setFillColor(sf::Color::Red);
     sprite_.setSize({32, 32});
     window.draw(sprite_);
@@ -357,7 +352,7 @@ void Application::on_render(sf::RenderWindow& window)
         if (e.active)
         {
             sprite_.setPosition(e.transform.position);
-            window.draw(sprite_);
+           // window.draw(sprite_);
         }
     }
 }

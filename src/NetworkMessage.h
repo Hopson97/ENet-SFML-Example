@@ -10,12 +10,14 @@ enum class ToServerMessageType : u8
     None,
     Message,
 
-    Position,
+    Input,
 };
 
 enum class ToClientMessage : u8
 {
     None,
+
+    ClientInfo,
 
     Message,
     PlayerJoin,

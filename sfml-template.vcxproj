@@ -151,6 +151,7 @@
     <ClCompile Include="deps\enet\enet_impl.cpp" />
     <ClCompile Include="src\Application.cpp" />
     <ClCompile Include="deps\imgui_sfml\imgui-SFML.cpp" />
+    <ClCompile Include="src\Common.cpp" />
     <ClCompile Include="src\Keyboard.cpp" />
     <ClCompile Include="src\main.cpp" />
     <ClCompile Include="src\Server.cpp" />

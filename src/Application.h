@@ -13,6 +13,7 @@ enum class ConnectState
     Disconnected,
     Connecting,
     Connected,
+    Ready,
     ConnectFailed,
 };
 
@@ -56,11 +57,11 @@ class Application
     std::jthread connect_thread_;
 
     sf::RectangleShape sprite_;
-    sf::Vector2f position_;
-    sf::Vector2f velocity_;
+    EntityTransform player_;
 
     std::array<Entity, MAX_CLIENTS> entities_;
 
+    u32 input_sequence_ = 0;
     Keyboard keyboard_;
 
     struct Config
