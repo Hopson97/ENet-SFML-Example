@@ -27,7 +27,7 @@ struct Entity
     std::vector<PositionBuffer> position_buffer;
 
     EntityTransform transform;
-    int id = -1;
+    i16 id = -1;
     bool active = false;
 };
 
@@ -48,17 +48,25 @@ class Application
 
   private:
     const sf::RenderWindow& window_;
+
+    /// If this client is the host, then the server is created on a different thread
     Server server_;
 
     ENetHost* client_ = nullptr;
     ENetPeer* peer_ = nullptr;
 
+    /// Connecting this client to the server is done via a state machine - on a different thread to avoid freezing the 
+    /// window while connecting
     std::atomic<ConnectState> connect_state_ = ConnectState::Disconnected;
     std::jthread connect_thread_;
 
+    /// Used to render all players and entities
     sf::RectangleShape sprite_;
-    EntityTransform player_;
 
+    /// The client Id of this player - used to index the `entities_` array
+    i16 player_id_ = 0;
+
+    /// All entities
     std::array<Entity, MAX_CLIENTS> entities_;
 
     u32 input_sequence_ = 0;
@@ -67,6 +75,7 @@ class Application
     struct Config
     {
         bool do_interpolation = true;
+        bool client_side_prediction_ = true;
     } config_;
 
     sf::Clock game_time_;

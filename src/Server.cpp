@@ -62,7 +62,7 @@ void Server::launch()
 
         if (++ticks % 20 == 0)
         {
-            std::cout << "Ticks: " << ticks << " (" << ticks / 20 << " seconds)" << '\n';
+            std::cout << "[Server] Ticks: " << ticks << " (" << ticks / 20 << " seconds)" << '\n';
         }
 
         ENetEvent event;
@@ -75,21 +75,28 @@ void Server::launch()
 
                     // Host -> event.peer->address.host
                     // Port -> event.peer->address.port
-                    std::cout << "A new client connected.\n";
+                    std::cout << "[Server] A new client connected.\n";
+                    i16 id = 0;
                     for (auto& player : players_)
                     {
-                        std::cout << "Finding a slot...\n";
+                        std::cout << "[Server] Finding a slot...\n";
                         if (!player.peer)
                         {
+                            id = player.id;
                             player.peer = event.peer;
                             event.peer->data = (void*)&player;
-                            std::cout << "Slot: " << event.peer << '\n';
+                            std::cout << "[Server] Slot: " << (int)player.id << '\n';
+                            id = player.id;
                             break;
                         }
                     }
+                    std::cout << id << std::endl;
+                    ToClientNetworkMessage client_id{ToClientMessage::ClientInfo};
+                    client_id.payload << id;
+                    enet_peer_send(event.peer, 0, client_id.to_enet_packet());
+
                     ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerJoin};
-                    enet_host_broadcast(server_, 0,
-                                        outgoing_message.to_enet_packet((ENetPacketFlag)0));
+                    enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
                 }
                 break;
 
@@ -102,7 +109,7 @@ void Server::launch()
                         {
                             std::string text;
                             incoming_message.payload >> text;
-                            std::cout << "Got message from client: " << text << '\n';
+                            std::cout << "[Server] Got message from client: " << text << '\n';
 
                             ToClientNetworkMessage outgoing_message{ToClientMessage::Message};
                             outgoing_message.payload << text;
@@ -116,14 +123,13 @@ void Server::launch()
                             Input input;
                             u32 sequence = 0;
                             auto player = (ServerPlayer*)event.peer->data;
-                            
+
                             incoming_message.payload >> sequence >> input.dt >> input.keys;
 
                             process_input_for_player(player->transform, input);
 
-
-                            //incoming_message.payload >> player->transform.position.x >>
-                            //    player->transform.position.y;
+                            // incoming_message.payload >> player->transform.position.x >>
+                            //     player->transform.position.y;
                         }
                         break;
 
@@ -137,7 +143,7 @@ void Server::launch()
                 case ENET_EVENT_TYPE_DISCONNECT:
                 {
 
-                    std::cout << "Client has disconnected.\n";
+                    std::cout << "[Server] Client has disconnected.\n";
                     reset_player_peer(event.peer);
                     ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerLeave};
                     enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
@@ -146,7 +152,7 @@ void Server::launch()
 
                 case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
                 {
-                    std::cout << "Client has timed-out.\n";
+                    std::cout << "[Server] Client has timed-out.\n";
                     reset_player_peer(event.peer);
                     ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerLeave};
                     enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
@@ -161,7 +167,7 @@ void Server::launch()
         ToClientNetworkMessage snapshot(ToClientMessage::Snapshot);
         for (const auto& player : players_)
         {
-            snapshot.payload << ticks << player.id << player.transform.position.x
+            snapshot.payload << player.id << player.transform.position.x
                              << player.transform.position.y << (player.peer ? true : false);
         }
         enet_host_broadcast(server_, 0, snapshot.to_enet_packet());

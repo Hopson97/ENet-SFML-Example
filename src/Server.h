@@ -17,7 +17,7 @@ constexpr float SERVER_TPS = 1000 / SERVER_TICK_RATE;
 
 struct ServerPlayer
 {
-    int id = -1;
+    i16 id = -1;
     ENetPeer* peer = nullptr;
     EntityTransform transform;
 };

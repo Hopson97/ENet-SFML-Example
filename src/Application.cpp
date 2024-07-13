@@ -81,7 +81,7 @@ bool Application::init_as_client()
                 event.type == ENET_EVENT_TYPE_CONNECT)
             {
                 connect_state_ = ConnectState::Connected;
-                std::cout << "Connected!\n";
+                std::cout << "[Client] Connected!\n";
             }
             else
             {
@@ -117,49 +117,52 @@ void Application::on_update(sf::Time dt)
                 switch (incoming_message.message_type)
                 {
                     case ToClientMessage::ClientInfo:
-                    {
+                        incoming_message.payload >> player_id_;
+                        std::cout << "[Client] Player ID is " << player_id_ << '\n';
+                        break;
 
-                    }
-    
                     case ToClientMessage::Message:
                     {
                         std::string message;
                         incoming_message.payload >> message;
-                        std::cout << "Got message from server: " << message << '\n';
+                        std::cout << "[Client] Got message from server: " << message << '\n';
                     }
                     break;
 
                     case ToClientMessage::PlayerJoin:
-                        std::cout << "A player has joined.\n";
+                        std::cout << "[Client] A player has joined.\n";
                         break;
 
                     case ToClientMessage::PlayerLeave:
-                        std::cout << "A player has left.\n";
+                        std::cout << "[Client] A player has left.\n";
                         break;
 
                     case ToClientMessage::Snapshot:
                     {
                         for (auto& player : entities_)
                         {
-                            // Read state from the packet
-                            int ticks;
+                            // Read state from the packet - TODO seperate this logic out from the
+                            // looping of players
                             sf::Vector2f position;
-                            incoming_message.payload >> ticks >> player.id >> position.x >>
-                                position.y >> player.active;
-
-                            if (config_.do_interpolation)
+                            incoming_message.payload >> player.id >> position.x >> position.y >>
+                                player.active;
+                            if (player.id == player_id_)
                             {
-                                player.position_buffer.push_back(
-                                    {.timestamp = game_time_.getElapsedTime(),
-                                     .position = position});
+                                entities_[(size_t)player_id_].transform.position = position;
                             }
-                            else
+                            else if (player.active)
                             {
-                               // std::cout << player_.position << '\n';
-                                player_.position = position;
-                                player.transform.position = position;
+                                if (config_.do_interpolation)
+                                {
+                                    player.position_buffer.push_back(
+                                        {.timestamp = game_time_.getElapsedTime(),
+                                         .position = position});
+                                }
+                                else
+                                {
+                                    player.transform.position = position;
+                                }
                             }
-                            break;
                         }
                     }
                     break;
@@ -176,6 +179,7 @@ void Application::on_update(sf::Time dt)
         }
     }
 
+    // Process the inputs, storing the key presses into an object to be sent to the server
     Input inputs{.dt = dt.asSeconds()};
 
     constexpr float speed = 25;
@@ -197,11 +201,19 @@ void Application::on_update(sf::Time dt)
         inputs.keys |= InputKeyPress::D;
     }
 
+    // Send the input packet to the server
     ToServerNetworkMessage input_message(ToServerMessageType::Input);
     input_message.payload << input_sequence_ << inputs.dt << inputs.keys;
     enet_peer_send(peer_, 0, input_message.to_enet_packet((ENetPacketFlag)0));
 
-    process_input_for_player(player_, inputs);
+    // Client side prediction ensures the player sees smooth movement despite the real
+    // simulation being om the server
+    // Without this, the player position is delayed and jittered as it must wait for the server to
+    // process the input
+    if (config_.client_side_prediction_)
+    {
+        process_input_for_player(entities_[(size_t)player_id_].transform, inputs);
+    }
 
     // Deubgging t
     static std::vector<float> rts;
@@ -215,7 +227,7 @@ void Application::on_update(sf::Time dt)
         auto render_ts = (now - sf::milliseconds(1000.0f / SERVER_TPS) * 4.0f);
         for (auto& entity : entities_)
         {
-            if (!entity.active || entity.position_buffer.size() < 2)
+            if (!entity.active || entity.position_buffer.size() < 2 || player_id_ == entity.id)
             {
                 continue;
             }
@@ -247,7 +259,7 @@ void Application::on_update(sf::Time dt)
                 entity.transform.position = {nx, ny};
             }
         }
-
+        /*
         while (ts.size() > 10)
         {
             ts.erase(ts.begin());
@@ -301,6 +313,7 @@ void Application::on_update(sf::Time dt)
             }
         }
         ImGui::End();
+    */
     }
 }
 
@@ -330,6 +343,7 @@ void Application::on_render(sf::RenderWindow& window)
             ImGui::Separator();
             ImGui::Text("Config Options");
             ImGui::Checkbox("Interpolation: ", &config_.do_interpolation);
+            ImGui::Checkbox("Client Side Prediction: ", &config_.client_side_prediction_);
         }
     }
     ImGui::End();
@@ -340,7 +354,7 @@ void Application::on_render(sf::RenderWindow& window)
     }
 
     // Draw player
-    sprite_.setPosition(player_.position);
+    sprite_.setPosition(entities_[(size_t)player_id_].transform.position);
     sprite_.setFillColor(sf::Color::Red);
     sprite_.setSize({32, 32});
     window.draw(sprite_);
@@ -349,10 +363,10 @@ void Application::on_render(sf::RenderWindow& window)
     sprite_.setFillColor({255, 0, 255, 100});
     for (auto& e : entities_)
     {
-        if (e.active)
+        if (e.id != player_id_ && e.active)
         {
             sprite_.setPosition(e.transform.position);
-           // window.draw(sprite_);
+            window.draw(sprite_);
         }
     }
 }
@@ -375,7 +389,7 @@ void Application::disconnect()
                     break;
 
                 case ENET_EVENT_TYPE_DISCONNECT:
-                    std::cout << "Disconnect success\n";
+                    std::cout << "[Client] Disconnect success\n";
                     success_disconnect = true;
                     break;
 
