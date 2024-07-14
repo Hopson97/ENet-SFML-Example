@@ -1,6 +1,7 @@
 #include "Application.h"
 
 #include <iostream>
+#include <ranges>
 
 #include <SFML/Network/Packet.hpp>
 #include <SFML/Window/Keyboard.hpp>
@@ -31,6 +32,11 @@ namespace
 Application::Application(const sf::RenderWindow& window)
     : window_(window_)
 {
+    entities_.reserve(256);
+    for (int i = 0; i < MAX_CLIENTS; i++)
+    {
+        auto& e = entities_.emplace_back();
+    }
 }
 
 Application::~Application()
@@ -149,6 +155,13 @@ void Application::on_update(sf::Time dt)
                     // Snapshot contains the positons of ALL entities - including the player's own
                     case ToClientMessage::Snapshot:
                     {
+                        decltype(entities_)::size_type old_size = entities_.size();
+                        decltype(entities_)::size_type length;
+                        incoming_message.payload >> length;
+                        if (length > old_size)
+                        {
+                            entities_.resize(length);
+                        }
                         // In this example, the server and client should have matching arrays that align with what is in the packet
                         for (auto& entity : entities_)
                         {
@@ -197,11 +210,23 @@ void Application::on_update(sf::Time dt)
                                     entity.position_buffer.push_back(
                                         {.timestamp = game_time_.getElapsedTime(),
                                          .position = position});
+
                                 }
                                 else
                                 {
                                     entity.common.transform.position = position;
                                 }
+                            }
+                        }
+
+                        // New entities will not have a position yet if interpolation is turned on. This ensure their position is correct.
+                        // Note this only works if the entity are new on the BACK of the vector - which is currnetly 
+                        for (auto& entity : entities_ | std::ranges::views::drop(old_size))
+                        {
+                            std::cout << "resetting new entity\n";
+                            if (config_.server_reconciliation_)
+                            {
+                                entity.common.transform.position = entity.position_buffer.back().position;
                             }
                         }
                     }
@@ -403,7 +428,6 @@ void Application::on_render(sf::RenderWindow& window)
     sprite_.setFillColor({255, 0, 255, 100});
     for (auto& e : entities_)
     {
-        
         if (e.common.id != player_id_ && e.common.active)
         {
             // Non-player entities are shown as a different colour

@@ -77,7 +77,7 @@ class Application
     i16 player_id_ = 0;
 
     /// All entities
-    std::array<Entity, MAX_ENTITIES> entities_;
+    std::vector<Entity> entities_;
 
     /// Used
     u32 input_sequence_ = 0;

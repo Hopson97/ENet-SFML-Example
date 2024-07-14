@@ -9,29 +9,39 @@
 
 namespace
 {
-    void reset_player_peer(ENetPeer* peer)
+    auto reset_player_peer(ENetPeer* peer)
     {
         if (!peer)
         {
-            return;
+            return -1;
         }
 
-        auto player = (ServerEntity*)peer->data;
+        auto player = (ServerPlayer*)peer->data;
         if (player)
         {
             player->peer = nullptr;
-            player->common.active = false;
+            player->entity_id = -1;
         }
         peer->data = nullptr;
+        return player->entity_id;
     }
 } // namespace
 
 Server::Server()
 {
-    for (int i = 0; i < entities_.size(); i++)
+    // entities_.reserve(128);
+    for (int i = 0; i < MAX_CLIENTS; i++)
     {
-        entities_[i].id = i;
-        entities_[i].common.active = i >= MAX_CLIENTS;
+        auto& e = entities_.emplace_back();
+        e.common.id = i;
+    }
+
+    for (int i = 0; i < 5; i++)
+    {
+        auto& e = entities_.emplace_back();
+        e.common.active = true;
+        e.common.id = static_cast<i16>(entities_.size() - 1);
+        e.common.transform.position = {(float)(rand() % 1000), (float)(rand() % 1000)};
     }
 }
 
@@ -83,13 +93,14 @@ void Server::launch()
                     for (int i = 0; i < MAX_CLIENTS; i++)
                     {
                         std::cout << "[Server] Finding a slot...\n";
-                        if (!entities_[i].peer)
+                        if (!players_[i].peer)
                         {
-                            id = entities_[i].id;
-                            entities_[i].peer = event.peer;
+                            id = entities_[i].common.id;
                             entities_[i].common.active = true;
-                            event.peer->data = (void*)&entities_[i];
-                            std::cout << "[Server] Slot: " << (int)entities_[i].id << '\n';
+                            players_[i].peer = event.peer;
+                            players_[i].entity_id = id;
+                            event.peer->data = (void*)&players_[i];
+                            std::cout << "[Server] Slot: " << (int)entities_[i].common.id << '\n';
                             break;
                         }
                     }
@@ -123,12 +134,13 @@ void Server::launch()
                         case ToServerMessageType::Input:
                         {
                             Input input;
-                            auto player = (ServerEntity*)event.peer->data;
+                            auto player = (ServerPlayer*)event.peer->data;
+                            auto& entity = entities_[player->entity_id];
 
-                            incoming_message.payload >> player->last_processed >> input.dt >>
+                            incoming_message.payload >> entity.last_processed >> input.dt >>
                                 input.keys;
 
-                            process_input_for_player(player->common.transform, input);
+                            process_input_for_player(entity.common.transform, input);
                         }
                         break;
 
@@ -143,7 +155,12 @@ void Server::launch()
                 {
 
                     std::cout << "[Server] Client has disconnected.\n";
-                    reset_player_peer(event.peer);
+                    auto entity_id = reset_player_peer(event.peer);
+                    if (entity_id >= 0)
+                    {
+                        entities_[entity_id].common.active = false;
+                    }
+
                     ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerLeave};
                     enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
                 }
@@ -152,7 +169,11 @@ void Server::launch()
                 case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
                 {
                     std::cout << "[Server] Client has timed-out.\n";
-                    reset_player_peer(event.peer);
+                    auto entity_id = reset_player_peer(event.peer);
+                    if (entity_id >= 0)
+                    {
+                        entities_[entity_id].common.active = false;
+                    }
                     ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerLeave};
                     enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
                 }
@@ -164,7 +185,7 @@ void Server::launch()
         }
 
         constexpr static float ENTITY_MAX_SPEED = 150.0f;
-        for (auto& entity : entities_ | std::ranges::views::drop(MAX_CLIENTS)) 
+        for (auto& entity : entities_ | std::ranges::views::drop(MAX_CLIENTS))
         {
             auto& entity_transform = entity.common.transform;
             auto& player_position = entities_[0].common.transform.position;
@@ -175,17 +196,18 @@ void Server::launch()
             auto move = diff / (len == 0 ? 1 : len);
 
             auto& velocity = entity_transform.velocity;
-            velocity += move * (2.0f + static_cast<float>(entity.id) / 100.0f);
+            velocity += move * (1.5f + static_cast<float>(entity.common.id) / 100.0f);
 
-            velocity.x = std::clamp(velocity.x, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
-            velocity.y = std::clamp(velocity.y, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
+            velocity.x = std::clamp(velocity.x, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.90f;
+            velocity.y = std::clamp(velocity.y, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.90f;
             entity_transform.position += velocity;
         }
 
         ToClientNetworkMessage snapshot(ToClientMessage::Snapshot);
+        snapshot.payload << entities_.size();
         for (const auto& entity : entities_)
         {
-            snapshot.payload << entity.id << entity.last_processed
+            snapshot.payload << entity.common.id << entity.last_processed
                              << entity.common.transform.position.x
                              << entity.common.transform.position.y << entity.common.active;
         }
