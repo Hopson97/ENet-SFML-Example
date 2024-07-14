@@ -8,9 +8,7 @@
 #include <imgui_sfml/imgui-SFML.h>
 
 #include "Application.h"
-#include "Util/Array2D.h"
 #include "Util/Profiler.h"
-#include "Util/TimeStep.h"
 
 namespace
 {
@@ -36,7 +34,6 @@ int main()
     }
 
     sf::Clock clock;
-    TimeStep fixed_updater{50};
     Profiler profiler;
     bool show_profiler = false;
     bool option_selected = false;
@@ -73,17 +70,14 @@ int main()
             ImGui::End();
         }
 
+        // Update
         {
             auto& update_profiler = profiler.begin_section("Update");
             app.on_update(dt);
             update_profiler.end_section();
         }
 
-        // Fixed-rate update
-        {
-            auto& fixed_update_profiler = profiler.begin_section("Fixed Update");
-            fixed_update_profiler.end_section();
-        }
+
         // Render
         window.clear();
         {

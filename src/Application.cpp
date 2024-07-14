@@ -102,6 +102,15 @@ void Application::on_event([[maybe_unused]] const sf::RenderWindow& window, cons
 
 void Application::on_update(sf::Time dt)
 {
+    // Each update is done as follows and is important to be done in this order:
+    // 
+    // 1. Handle incoming packets from the server
+    // 2. Handle input from keyboard, store in buffer
+    // 3. Send input to the server
+    // 4. Apply client side prediction (From 4)
+    // 5. Apply snapshot interpolation (From 1)
+
+
     if (connect_state_ != ConnectState::Connected)
     {
         return;
@@ -137,6 +146,7 @@ void Application::on_update(sf::Time dt)
                         std::cout << "[Client] A player has left.\n";
                         break;
 
+                    // Snapshot contains the positons of ALL entities - including the player's own
                     case ToClientMessage::Snapshot:
                     {
                         // In this example, the server and client should have matching arrays that align with what is in the packet
@@ -149,11 +159,13 @@ void Application::on_update(sf::Time dt)
                             incoming_message.payload >> entity.common.id >> input_sequence >>
                                 position.x >> position.y >> entity.common.active;
 
-                            // For "this player" just set the position, and correct the position reconciliation
-                            // when the server is out of sync with this client
+                            // If the entity is "this player"
                             if (entity.common.id == player_id_)
                             {
+                                // Set position
                                 entities_[(size_t)player_id_].common.transform.position = position;
+
+                                // Correct position hen the server is out of sync with this client
                                 if (config_.server_reconciliation_)
                                 {
                                     bool out_of_sync_found = false;
@@ -394,6 +406,7 @@ void Application::on_render(sf::RenderWindow& window)
         
         if (e.common.id != player_id_ && e.common.active)
         {
+            // Non-player entities are shown as a different colour
             if (e.common.id >= MAX_CLIENTS)
             {
                 sprite_.setFillColor({255, 255, 150, 100});

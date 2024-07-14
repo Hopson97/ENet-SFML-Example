@@ -16,12 +16,6 @@ using i16 = int16_t;
 using i32 = int32_t;
 using i64 = int64_t;
 
-/**
-  * 
-  *     Common types and functions for both the client and server
-  * 
-  */
-
 enum InputKeyPress
 {
     NONE = 0,

@@ -19,6 +19,7 @@ enum class ConnectState
 
 struct Entity
 {
+    /// The position buffer is used for client side interpolation
     struct PositionBuffer
     {
         sf::Time timestamp;
@@ -26,23 +27,28 @@ struct Entity
     };
     std::vector<PositionBuffer> position_buffer;
 
+    /// Transforms, id, etc
     EntityCommon common;
 };
 
+/// Contains the input state, and the player's own transform at the time the input was received
 struct InputBuffer
 {
     Input input;
     EntityTransform state;
 };
 
-// The client
+// The client application
 class Application
 {
   public:
     Application(const sf::RenderWindow& window);
     ~Application();
 
+    /// Creates a server on a background thread and connects to it 
     bool init_as_host();
+
+    /// Only connect to an already running server
     bool init_as_client();
 
     void on_event(const sf::RenderWindow& window, const sf::Event& e);
@@ -73,6 +79,7 @@ class Application
     /// All entities
     std::array<Entity, MAX_ENTITIES> entities_;
 
+    /// Used
     u32 input_sequence_ = 0;
     std::vector<InputBuffer> pending_inputs_;
 

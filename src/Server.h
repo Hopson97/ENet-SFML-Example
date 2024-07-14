@@ -42,11 +42,9 @@ class Server
   private:
     void launch();
 
-
     std::jthread server_thread_;
     std::atomic_bool running_ = false;
 
-    // Network stuff
     ENetHost* server_ = nullptr;
 
     std::array<ServerEntity, MAX_ENTITIES> entities_;

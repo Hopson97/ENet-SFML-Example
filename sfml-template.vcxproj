@@ -185,10 +185,8 @@
     <ClInclude Include="src\Keyboard.h" />
     <ClInclude Include="src\NetworkMessage.h" />
     <ClInclude Include="src\Server.h" />
-    <ClInclude Include="src\Util\Array2D.h" />
     <ClInclude Include="src\Util\ImGuiExtension.h" />
     <ClInclude Include="src\Util\Profiler.h" />
-    <ClInclude Include="src\Util\TimeStep.h" />
     <ClInclude Include="src\Util\Util.h" />
   </ItemGroup>
   <ItemGroup>
