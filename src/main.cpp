@@ -25,7 +25,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    sf::RenderWindow window({1600, 900}, "ENet Example");
+    sf::RenderWindow window({800, 600}, "ENet Example");
     window.setVerticalSyncEnabled(true);
     window.setActive(true);
 

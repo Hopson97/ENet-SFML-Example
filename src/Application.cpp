@@ -389,8 +389,14 @@ void Application::on_render(sf::RenderWindow& window)
     sprite_.setFillColor({255, 0, 255, 100});
     for (auto& e : entities_)
     {
+        
         if (e.common.id != player_id_ && e.common.active)
         {
+            if (e.common.id >= MAX_CLIENTS)
+            {
+                sprite_.setFillColor({255, 255, 150, 100});
+            }
+                
             sprite_.setPosition(e.common.transform.position);
             window.draw(sprite_);
         }
