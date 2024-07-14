@@ -244,7 +244,7 @@ void Application::on_update(sf::Time dt)
     // Send the input packet to the server
     ToServerNetworkMessage input_message(ToServerMessageType::Input);
     input_message.payload << inputs.sequence << inputs.dt << inputs.keys;
-    enet_peer_send(peer_, 0, input_message.to_enet_packet((ENetPacketFlag)0));
+    enet_peer_send(peer_, 0, input_message.to_enet_packet());
 
     pending_inputs_.push_back({inputs, entities_[(size_t)player_id_].common.transform});
 
