@@ -4,21 +4,19 @@ Example of a simple client/server "game" using SFML for graphics and ENnet for n
 
 Resources used to create this:
 
-* [Fast-Paced Multiplayer (Gabriel Gambetta)](https://www.gabrielgambetta.com/client-server-game-architecture.html)
+- [Fast-Paced Multiplayer (Gabriel Gambetta)](https://www.gabrielgambetta.com/client-server-game-architecture.html)
 
-* [Gaffer on Games (Glenn Fiedler)](https://gafferongames.com/post/snapshot_interpolation/)
+- [Gaffer on Games (Glenn Fiedler)](https://gafferongames.com/post/snapshot_interpolation/)
 
-* [Server In-game Protocol Design and Optimization (Valve)](https://developer.valvesoftware.com/wiki/Latency_Compensating_Methods_in_Client/Server_In-game_Protocol_Design_and_Optimization)
+- [Server In-game Protocol Design and Optimization (Valve)](https://developer.valvesoftware.com/wiki/Latency_Compensating_Methods_in_Client/Server_In-game_Protocol_Design_and_Optimization)
 
-* [Source Multiplayer Networking](https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking)
-
- 
+- [Source Multiplayer Networking](https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking)
 
 ## Building and Running
 
 ### Windows (Visual Studio)
 
-The easiest way to build is to use [vcpkg](https://vcpkg.io/en/index.html) and install SFML through this.
+The easiest way to build is to use [vcpkg](https://vcpkg.io/en/index.html) and install the dependencies through this.
 
 ```bash
 vcpkg install sfml

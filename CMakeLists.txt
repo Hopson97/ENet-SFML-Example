@@ -32,9 +32,6 @@ else()
 		-Wall -Wextra -pedantic)
 endif()
 
-#Set module path
-set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules" ${CMAKE_MODULE_PATH})
-
 add_subdirectory(deps)
 target_include_directories(${PROJECT_NAME} PRIVATE deps)
 
