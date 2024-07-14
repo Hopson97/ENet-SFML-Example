@@ -68,12 +68,16 @@ class Application
     std::array<Entity, MAX_ENTITIES> entities_;
 
     u32 input_sequence_ = 0;
+    std::vector<Input> pending_inputs_;
+
+
     Keyboard keyboard_;
 
     struct Config
     {
         bool do_interpolation = true;
         bool client_side_prediction_ = true;
+        bool server_reconciliation_ = true;
     } config_;
 
     sf::Clock game_time_;

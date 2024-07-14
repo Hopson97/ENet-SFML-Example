@@ -12,7 +12,7 @@
 
 
 constexpr int MAX_CLIENTS = 4;
-constexpr int MAX_ENTITIES = 1000;
+constexpr int MAX_ENTITIES = 4;
 constexpr float SERVER_TICK_RATE = 20;
 constexpr float SERVER_TPS = 1000 / SERVER_TICK_RATE;
 
@@ -21,6 +21,8 @@ struct ServerEntity
     i16 id = -1;
     ENetPeer* peer = nullptr; 
     EntityCommon common;
+
+    u32 last_processed = 0;
 };
 
 class Server

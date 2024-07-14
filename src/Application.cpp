@@ -144,11 +144,34 @@ void Application::on_update(sf::Time dt)
                             // Read state from the packet - TODO seperate this logic out from the
                             // looping of players
                             sf::Vector2f position;
-                            incoming_message.payload >> entity.common.id >> position.x >>
-                                position.y >> entity.common.active;
+                            u32 input_sequence = 0;
+                            incoming_message.payload >> entity.common.id >> input_sequence >>
+                                position.x >> position.y >> entity.common.active;
+
                             if (entity.common.id == player_id_)
                             {
                                 entities_[(size_t)player_id_].common.transform.position = position;
+                                if (config_.server_reconciliation_)
+                                {
+                                    for (const auto& pending_input : pending_inputs_)
+                                    {
+
+                                        if (pending_input.sequence > input_sequence)
+                                        {
+                                            // std::cout << "Doing Server Reconciliation: "
+                                            //           << "pending: " << pending_input.sequence
+                                            //           << ' ' << "server: " << input_sequence
+                                            //          << std::endl;
+                                            process_input_for_player(
+                                                entities_[(size_t)player_id_].common.transform,
+                                                pending_input);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    pending_inputs_.clear();
+                                }
                             }
                             else if (entity.common.active)
                             {
@@ -180,7 +203,7 @@ void Application::on_update(sf::Time dt)
     }
 
     // Process the inputs, storing the key presses into an object to be sent to the server
-    Input inputs{.dt = dt.asSeconds()};
+    Input inputs{.sequence = input_sequence_++, .dt = dt.asSeconds()};
 
     constexpr float speed = 25;
     constexpr float MAX_SPEED = 256;
@@ -203,7 +226,7 @@ void Application::on_update(sf::Time dt)
 
     // Send the input packet to the server
     ToServerNetworkMessage input_message(ToServerMessageType::Input);
-    input_message.payload << input_sequence_ << inputs.dt << inputs.keys;
+    input_message.payload << inputs.sequence << inputs.dt << inputs.keys;
     enet_peer_send(peer_, 0, input_message.to_enet_packet((ENetPacketFlag)0));
 
     // Client side prediction ensures the player sees smooth movement despite the real
@@ -214,6 +237,7 @@ void Application::on_update(sf::Time dt)
     {
         process_input_for_player(entities_[(size_t)player_id_].common.transform, inputs);
     }
+    pending_inputs_.push_back(inputs);
 
     // Deubgging t
     static std::vector<float> rts;
@@ -345,6 +369,7 @@ void Application::on_render(sf::RenderWindow& window)
             ImGui::Text("Config Options");
             ImGui::Checkbox("Interpolation: ", &config_.do_interpolation);
             ImGui::Checkbox("Client Side Prediction: ", &config_.client_side_prediction_);
+            ImGui::Checkbox("Server Reconciliation: ", &config_.server_reconciliation_);
         }
     }
     ImGui::End();

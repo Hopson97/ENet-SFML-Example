@@ -1,6 +1,7 @@
 #include "Server.h"
 
 #include <iostream>
+#include <ranges>
 
 #include "NetworkMessage.h"
 
@@ -122,15 +123,12 @@ void Server::launch()
                         case ToServerMessageType::Input:
                         {
                             Input input;
-                            u32 sequence = 0;
                             auto player = (ServerEntity*)event.peer->data;
 
-                            incoming_message.payload >> sequence >> input.dt >> input.keys;
+                            incoming_message.payload >> player->last_processed >> input.dt >>
+                                input.keys;
 
                             process_input_for_player(player->common.transform, input);
-
-                            // incoming_message.payload >> player->transform.position.x >>
-                            //     player->transform.position.y;
                         }
                         break;
 
@@ -166,9 +164,8 @@ void Server::launch()
         }
 
         constexpr static float ENTITY_MAX_SPEED = 150.0f;
-        for (int i = MAX_CLIENTS; i < MAX_ENTITIES; i++)
+        for (auto& entity : entities_ | std::ranges::views::drop(MAX_CLIENTS)) 
         {
-            auto& entity = entities_[i];
             auto& entity_transform = entity.common.transform;
             auto& player_position = entities_[0].common.transform.position;
 
@@ -178,7 +175,7 @@ void Server::launch()
             auto move = diff / (len == 0 ? 1 : len);
 
             auto& velocity = entity_transform.velocity;
-            velocity += move * (2.0f + static_cast<float>(i) / 100.0f);
+            velocity += move * (2.0f + static_cast<float>(entity.id) / 100.0f);
 
             velocity.x = std::clamp(velocity.x, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
             velocity.y = std::clamp(velocity.y, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
@@ -188,7 +185,8 @@ void Server::launch()
         ToClientNetworkMessage snapshot(ToClientMessage::Snapshot);
         for (const auto& entity : entities_)
         {
-            snapshot.payload << entity.id << entity.common.transform.position.x
+            snapshot.payload << entity.id << entity.last_processed
+                             << entity.common.transform.position.x
                              << entity.common.transform.position.y << entity.common.active;
         }
         enet_host_broadcast(server_, 0, snapshot.to_enet_packet());

@@ -33,6 +33,7 @@ enum InputKeyPress
 
 struct Input
 {
+    u32 sequence = 0;
     float dt = 0;
     u8 keys = InputKeyPress::NONE;
 };
