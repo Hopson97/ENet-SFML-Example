@@ -25,7 +25,7 @@ int main()
         return EXIT_FAILURE;
     }
 
-    sf::RenderWindow window({800, 600}, "ENet Example");
+    sf::RenderWindow window({1600, 900}, "ENet Example");
     window.setVerticalSyncEnabled(true);
     window.setActive(true);
 
@@ -82,7 +82,6 @@ int main()
         // Fixed-rate update
         {
             auto& fixed_update_profiler = profiler.begin_section("Fixed Update");
-            fixed_updater.update([&](sf::Time dt) { app.on_fixed_update(dt); });
             fixed_update_profiler.end_section();
         }
         // Render

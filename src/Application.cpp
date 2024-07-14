@@ -139,6 +139,7 @@ void Application::on_update(sf::Time dt)
 
                     case ToClientMessage::Snapshot:
                     {
+                        // In this example, the server and client should have matching arrays that align with what is in the packet
                         for (auto& entity : entities_)
                         {
                             // Read state from the packet - TODO seperate this logic out from the
@@ -148,30 +149,34 @@ void Application::on_update(sf::Time dt)
                             incoming_message.payload >> entity.common.id >> input_sequence >>
                                 position.x >> position.y >> entity.common.active;
 
+                            // For "this player" just set the position, and correct the position reconciliation
+                            // when the server is out of sync with this client
                             if (entity.common.id == player_id_)
                             {
                                 entities_[(size_t)player_id_].common.transform.position = position;
                                 if (config_.server_reconciliation_)
                                 {
+                                    bool out_of_sync_found = false;
                                     for (const auto& pending_input : pending_inputs_)
                                     {
-
-                                        if (pending_input.sequence > input_sequence)
+                                        if (pending_input.input.sequence > input_sequence)
                                         {
-                                            // std::cout << "Doing Server Reconciliation: "
-                                            //           << "pending: " << pending_input.sequence
-                                            //           << ' ' << "server: " << input_sequence
-                                            //          << std::endl;
+                                            // When an out-of-sync input is found, the player state is reset back
+                                            // to that to ensure the final result is identical after re-applping the inputs
+                                            if (!out_of_sync_found)
+                                            {
+                                                entities_[(size_t)player_id_].common.transform =
+                                                    pending_input.state;
+                                                out_of_sync_found = true;
+                                            }
                                             process_input_for_player(
                                                 entities_[(size_t)player_id_].common.transform,
-                                                pending_input);
+                                                pending_input.input);
                                         }
                                     }
                                 }
-                                else
-                                {
-                                    pending_inputs_.clear();
-                                }
+                                pending_inputs_.clear();
+
                             }
                             else if (entity.common.active)
                             {
@@ -229,6 +234,8 @@ void Application::on_update(sf::Time dt)
     input_message.payload << inputs.sequence << inputs.dt << inputs.keys;
     enet_peer_send(peer_, 0, input_message.to_enet_packet((ENetPacketFlag)0));
 
+    pending_inputs_.push_back({inputs, entities_[(size_t)player_id_].common.transform});
+
     // Client side prediction ensures the player sees smooth movement despite the real
     // simulation being om the server
     // Without this, the player position is delayed and jittered as it must wait for the server to
@@ -237,7 +244,6 @@ void Application::on_update(sf::Time dt)
     {
         process_input_for_player(entities_[(size_t)player_id_].common.transform, inputs);
     }
-    pending_inputs_.push_back(inputs);
 
     // Deubgging t
     static std::vector<float> rts;
@@ -340,10 +346,6 @@ void Application::on_update(sf::Time dt)
         ImGui::End();
     */
     }
-}
-
-void Application::on_fixed_update(sf::Time dt)
-{
 }
 
 void Application::on_render(sf::RenderWindow& window)

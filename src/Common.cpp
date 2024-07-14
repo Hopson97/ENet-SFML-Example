@@ -3,8 +3,8 @@
 #include <algorithm>
 #include <iostream>
 
-constexpr float SPEED = 256;
-constexpr float MAX_SPEED = 1000;
+constexpr float SPEED = 25;
+constexpr float MAX_SPEED = 256;
 
 void process_input_for_player(EntityTransform& transform, const Input& input) noexcept
 {
@@ -26,11 +26,11 @@ void process_input_for_player(EntityTransform& transform, const Input& input) no
     {
         change += {SPEED, 0};
     }
-    //auto& velocity = transform.velocity;
-    //velocity += change * input.dt;
-    //velocity.x = std::clamp(velocity.x, -MAX_SPEED, MAX_SPEED) * 0.94f;
-    //velocity.y = std::clamp(velocity.y, -MAX_SPEED, MAX_SPEED) * 0.94f;
-    //transform.position += velocity;
+    auto& velocity = transform.velocity;
+    velocity += change * input.dt;
+    velocity.x = std::clamp(velocity.x, -MAX_SPEED, MAX_SPEED) * 0.94f;
+    velocity.y = std::clamp(velocity.y, -MAX_SPEED, MAX_SPEED) * 0.94f;
+    transform.position += velocity;
 
-    transform.position += change * input.dt;
+    // transform.position += change * input.dt;
 }

@@ -29,6 +29,13 @@ struct Entity
     EntityCommon common;
 };
 
+struct InputBuffer
+{
+    Input input;
+    EntityTransform state;
+};
+
+// The client
 class Application
 {
   public:
@@ -40,7 +47,6 @@ class Application
 
     void on_event(const sf::RenderWindow& window, const sf::Event& e);
     void on_update(sf::Time dt);
-    void on_fixed_update(sf::Time dt);
     void on_render(sf::RenderWindow& window);
     void disconnect();
 
@@ -68,7 +74,7 @@ class Application
     std::array<Entity, MAX_ENTITIES> entities_;
 
     u32 input_sequence_ = 0;
-    std::vector<Input> pending_inputs_;
+    std::vector<InputBuffer> pending_inputs_;
 
 
     Keyboard keyboard_;
