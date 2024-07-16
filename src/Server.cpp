@@ -179,7 +179,8 @@ void Server::launch()
 
             velocity.x = std::clamp(velocity.x, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
             velocity.y = std::clamp(velocity.y, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
-            entity_transform.position += velocity;
+            apply_map_collisions(entity_transform);
+            //entity_transform.position += velocity;
         }
 
         ToClientNetworkMessage snapshot(ToClientMessage::Snapshot);

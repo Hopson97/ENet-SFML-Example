@@ -12,7 +12,7 @@
 
 
 constexpr int MAX_CLIENTS = 4;
-constexpr int MAX_ENTITIES = 5;
+constexpr int MAX_ENTITIES = 400;
 constexpr float SERVER_TICK_RATE = 20;
 constexpr float SERVER_TPS = 1000 / SERVER_TICK_RATE;
 
