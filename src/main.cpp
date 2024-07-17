@@ -38,7 +38,7 @@ int main()
     bool show_profiler = false;
     bool option_selected = false;
 
-    Application app(window);
+    Application app;
 
     while (window.isOpen())
     {

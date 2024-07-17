@@ -47,5 +47,5 @@ class Server
 
     ENetHost* server_ = nullptr;
 
-    std::array<ServerEntity, MAX_ENTITIES> entities_;
+    std::vector<ServerEntity> entities_{MAX_ENTITIES};
 };

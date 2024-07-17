@@ -28,11 +28,6 @@ namespace
     }
 } // namespace
 
-Application::Application(const sf::RenderWindow& window)
-    : window_(window_)
-{
-}
-
 Application::~Application()
 {
     disconnect();
@@ -221,9 +216,6 @@ void Application::on_update(sf::Time dt)
 
     // Process the inputs, storing the key presses into an object to be sent to the server
     Input inputs{.sequence = input_sequence_++, .dt = dt.asSeconds()};
-
-    constexpr float speed = 25;
-    constexpr float MAX_SPEED = 256;
     if (keyboard_.isKeyDown(sf::Keyboard::W))
     {
         inputs.keys |= InputKeyPress::W;
@@ -266,7 +258,7 @@ void Application::on_update(sf::Time dt)
     if (config_.do_interpolation)
     {
         auto now = game_time_.getElapsedTime();
-        auto render_ts = (now - sf::milliseconds(1000.0f / SERVER_TPS) * 4.0f);
+        auto render_ts = (now - sf::milliseconds(1000.0f / (float)SERVER_TPS) * 4.0f);
         for (auto& entity : entities_)
         {
             if (!entity.common.active || entity.position_buffer.size() < 2 ||
@@ -400,7 +392,7 @@ void Application::on_render(sf::RenderWindow& window)
     {
         for (int x = 0; x < MAP_SIZE; x++)
         {
-            auto tile = MAP[y * MAP_SIZE + x];
+            auto tile = get_tile(x, y);
             if (tile > 0)
             {
                 if (tile == 1)

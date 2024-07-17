@@ -43,7 +43,7 @@ struct EntityCommon
 {
     EntityTransform transform;
     i16 id = -1;
-    bool active;
+    bool active = false;
 };
 
 void process_input_for_player(EntityTransform& transform, const Input& input) noexcept;

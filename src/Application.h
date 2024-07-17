@@ -13,7 +13,6 @@ enum class ConnectState
     Disconnected,
     Connecting,
     Connected,
-    Ready,
     ConnectFailed,
 };
 
@@ -42,7 +41,6 @@ struct InputBuffer
 class Application
 {
   public:
-    Application(const sf::RenderWindow& window);
     ~Application();
 
     /// Creates a server on a background thread and connects to it 
@@ -57,8 +55,6 @@ class Application
     void disconnect();
 
   private:
-    const sf::RenderWindow& window_;
-
     /// If this client is the host, then the server is created on a different thread
     Server server_;
 
@@ -77,7 +73,7 @@ class Application
     i16 player_id_ = 0;
 
     /// All entities
-    std::array<Entity, MAX_ENTITIES> entities_;
+    std::vector<Entity> entities_{MAX_ENTITIES};
 
     /// Used
     u32 input_sequence_ = 0;
