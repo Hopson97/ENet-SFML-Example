@@ -1,6 +1,6 @@
 #include "Server.h"
 
-#include <iostream>
+#include <print>
 #include <ranges>
 
 #include "NetworkMessage.h"
@@ -47,7 +47,7 @@ bool Server::run()
 
     if (!server_)
     {
-        printf("An error occurred while trying to create an ENet server host.\n");
+        std::println("An error occurred while trying to create an ENet server host.\n");
         return false;
     }
 
@@ -65,7 +65,7 @@ void Server::launch()
 
         if (++ticks % 20 == 0)
         {
-            std::cout << "[Server] Ticks: " << ticks << " (" << ticks / 20 << " seconds)" << '\n';
+            std::println("[Server] Ticks: {} ({} seconds)", ticks, ticks / 20);
         }
 
         ENetEvent event;
@@ -78,18 +78,17 @@ void Server::launch()
 
                     // Host -> event.peer->address.host
                     // Port -> event.peer->address.port
-                    std::cout << "[Server] A new client connected.\n";
+                    std::println("[Server] A new client connected.");
                     i16 id = 0;
                     for (int i = 0; i < MAX_CLIENTS; i++)
                     {
-                        std::cout << "[Server] Finding a slot...\n";
                         if (!entities_[i].peer)
                         {
                             id = entities_[i].id;
                             entities_[i].peer = event.peer;
                             entities_[i].common.active = true;
                             event.peer->data = (void*)&entities_[i];
-                            std::cout << "[Server] Slot: " << (int)entities_[i].id << '\n';
+                            std::println("[Server] New client slot: {}", (int)entities_[i].id);
                             break;
                         }
                     }
@@ -111,7 +110,7 @@ void Server::launch()
                         {
                             std::string text;
                             incoming_message.payload >> text;
-                            std::cout << "[Server] Got message from client: " << text << '\n';
+                            std::println("[Server] Got message from client: ", text);
 
                             ToClientNetworkMessage outgoing_message{ToClientMessage::Message};
                             outgoing_message.payload << text;
@@ -141,8 +140,7 @@ void Server::launch()
 
                 case ENET_EVENT_TYPE_DISCONNECT:
                 {
-
-                    std::cout << "[Server] Client has disconnected.\n";
+                    std::println("[Server] Client has disconnected.");
                     reset_player_peer(event.peer);
                     ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerLeave};
                     enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());
@@ -151,7 +149,7 @@ void Server::launch()
 
                 case ENET_EVENT_TYPE_DISCONNECT_TIMEOUT:
                 {
-                    std::cout << "[Server] Client has timed-out.\n";
+                    std::println("[Server] Client has timed-out.");
                     reset_player_peer(event.peer);
                     ToClientNetworkMessage outgoing_message{ToClientMessage::PlayerLeave};
                     enet_host_broadcast(server_, 0, outgoing_message.to_enet_packet());

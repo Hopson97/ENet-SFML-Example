@@ -5,6 +5,7 @@
 #include <SFML/Network/Packet.hpp>
 #include <SFML/Window/Keyboard.hpp>
 #include <imgui.h>
+#include <print>
 
 #include "NetworkMessage.h"
 #include "Util/Util.h"
@@ -53,7 +54,7 @@ bool Application::init_as_client()
             if (!client_)
             {
                 connect_state_ = ConnectState::ConnectFailed;
-                std::cerr << "Failed to create a client host.\n";
+                std::println(std::cerr, "Failed to create a client host.");
                 return;
             }
 
@@ -66,7 +67,7 @@ bool Application::init_as_client()
             if (!peer_)
             {
                 connect_state_ = ConnectState::ConnectFailed;
-                std::cerr << "No available peers for initiating an ENet connection.\n";
+                std::println(std::cerr, "No available peers for initiating an ENet connection.");
                 return;
             }
 
@@ -76,7 +77,7 @@ bool Application::init_as_client()
                 event.type == ENET_EVENT_TYPE_CONNECT)
             {
                 connect_state_ = ConnectState::Connected;
-                std::cout << "[Client] Connected!\n";
+                std::println("[Client] Connected!");
             }
             else
             {
@@ -121,23 +122,22 @@ void Application::on_update(sf::Time dt)
                 {
                     case ToClientMessage::ClientInfo:
                         incoming_message.payload >> player_id_;
-                        std::cout << "[Client] Player ID is " << player_id_ << '\n';
                         break;
 
                     case ToClientMessage::Message:
                     {
                         std::string message;
                         incoming_message.payload >> message;
-                        std::cout << "[Client] Got message from server: " << message << '\n';
+                        std::println("[Client]  Got message from server: {}", message);
                     }
                     break;
 
                     case ToClientMessage::PlayerJoin:
-                        std::cout << "[Client] A player has joined.\n";
+                        std::println("[Client] A player has joined.\n");
                         break;
 
                     case ToClientMessage::PlayerLeave:
-                        std::cout << "[Client] A player has left.\n";
+                        std::println("[Client] A player has left.\n");
                         break;
 
                     // Snapshot contains the positons of ALL entities - including the player's own
@@ -450,7 +450,8 @@ void Application::disconnect()
                     break;
 
                 case ENET_EVENT_TYPE_DISCONNECT:
-                    std::cout << "[Client] Disconnect success\n";
+                    
+                    std::println("[Client] Disconnect success");
                     success_disconnect = true;
                     break;
 
