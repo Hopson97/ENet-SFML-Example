@@ -12,9 +12,9 @@ void process_input_for_player(EntityTransform& transform, const Input& input) no
 {
     auto keys = input.keys;
     sf::Vector2f change{};
-    if ((keys & InputKeyPress::W) == InputKeyPress::W)
+    if ((keys & InputKeyPress::W) == InputKeyPress::W && transform.is_grounded)
     {
-        change += {0, -SPEED};
+        change += {0, -SPEED * 25};
     }
     if ((keys & InputKeyPress::A) == InputKeyPress::A)
     {
@@ -31,7 +31,7 @@ void process_input_for_player(EntityTransform& transform, const Input& input) no
     auto& velocity = transform.velocity;
     velocity += change * input.dt;
     velocity.x = std::clamp(velocity.x, -MAX_SPEED, MAX_SPEED) * 0.94f;
-    velocity.y = std::clamp(velocity.y, -MAX_SPEED, MAX_SPEED) * 0.94f;
+    velocity.y = std::clamp(velocity.y, -MAX_SPEED, MAX_SPEED) * 0.98f;
 
     // Do basic collision detection + response!
     apply_map_collisions(transform);
@@ -51,14 +51,23 @@ void apply_map_collisions(EntityTransform& transform)
 
     auto tile_position = sf::Vector2i{position / TILE_SIZE};
 
-    // for (int y = (int)position.y; y <= position.y + TILE_SIZE; y += TILE_SIZE / 2)
+    transform.is_grounded = false;
+
+    for (int y = tile_position.y - 1; y <= tile_position.y + 1; y++)
     {
-        // for (int x = (int)position.x; x <= position.x + TILE_SIZE; x += TILE_SIZE / 2)
+        for (int x = tile_position.x - 1; x <= tile_position.x + 1; x++)
         {
-            // auto tile_position = sf::Vector2i{sf::Vector2f{(float)x, (float)y} / TILE_SIZE};
+
+        }
+    }
+
+    
+    
+                // auto tile_position = sf::Vector2i{sf::Vector2f{(float)x, (float)y} / TILE_SIZE};
             if (velocity.x > 0)
             {
-                if (get_tile(tile_position.x + 1, tile_position.y))
+                if (get_tile(tile_position.x + 1, tile_position.y) )
+                   // get_tile(tile_position.x + 1, tile_position.y + 1))
                 {
                     velocity.x = 0;
                     next_position.x = tile_position.x * TILE_SIZE;
@@ -79,7 +88,7 @@ void apply_map_collisions(EntityTransform& transform)
                 {
                     velocity.y = 0;
                     next_position.y = tile_position.y * TILE_SIZE;
-                    // grounded = true;
+                    transform.is_grounded = true;
                 }
             }
             else if (velocity.y < 0)
@@ -90,7 +99,11 @@ void apply_map_collisions(EntityTransform& transform)
                     next_position.y = tile_position.y * TILE_SIZE + TILE_SIZE;
                 }
             }
-        }
+    
+
+    if (!transform.is_grounded)
+    {
+        transform.velocity.y += 0.35;
     }
 
     position = next_position;

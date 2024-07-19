@@ -37,6 +37,7 @@ struct EntityTransform
 {
     sf::Vector2f position;
     sf::Vector2f velocity;
+    bool is_grounded = false;
 };
 
 struct EntityCommon
