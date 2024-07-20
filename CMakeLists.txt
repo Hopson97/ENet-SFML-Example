@@ -11,6 +11,7 @@ conan_basic_setup()
 add_executable(${PROJECT_NAME}
     src/main.cpp
     src/Application.cpp
+    src/Common.cpp
     src/Keyboard.cpp
     src/Server.cpp
 	
@@ -20,7 +21,7 @@ add_executable(${PROJECT_NAME}
 )
 
 #Set C++17
-target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_20)
+target_compile_features(${PROJECT_NAME} PUBLIC cxx_std_23)
 set_target_properties(${PROJECT_NAME} PROPERTIES CXX_EXTENSIONS OFF)
 
 #Set flags

@@ -1,5 +1,6 @@
 #include "Server.h"
 
+#include <cmath>
 #include <print>
 #include <ranges>
 
@@ -162,7 +163,7 @@ void Server::launch()
         }
 
         constexpr static float ENTITY_MAX_SPEED = 150.0f;
-        for (auto& entity : entities_ | std::ranges::views::drop(MAX_CLIENTS)) 
+        for (auto& entity : entities_ | std::ranges::views::drop(MAX_CLIENTS))
         {
             auto& entity_transform = entity.common.transform;
             auto& player_position = entities_[0].common.transform.position;
@@ -178,7 +179,7 @@ void Server::launch()
             velocity.x = std::clamp(velocity.x, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
             velocity.y = std::clamp(velocity.y, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
             apply_map_collisions(entity_transform);
-            //entity_transform.position += velocity;
+            // entity_transform.position += velocity;
         }
 
         ToClientNetworkMessage snapshot(ToClientMessage::Snapshot);

@@ -4,6 +4,7 @@
 
 #include <SFML/Network/Packet.hpp>
 #include <SFML/Window/Keyboard.hpp>
+#include <cmath>
 #include <imgui.h>
 #include <print>
 
@@ -407,7 +408,6 @@ void Application::on_render(sf::RenderWindow& window)
                 if (tile == 1)
                 {
                     sprite_.setFillColor(sf::Color::Green);
-                    
                 }
                 sprite_.setPosition(x * TILE_SIZE, y * TILE_SIZE);
                 window.draw(sprite_);
@@ -459,7 +459,7 @@ void Application::disconnect()
                     break;
 
                 case ENET_EVENT_TYPE_DISCONNECT:
-                    
+
                     std::println("[Client] Disconnect success");
                     success_disconnect = true;
                     break;
