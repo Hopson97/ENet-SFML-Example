@@ -417,6 +417,7 @@ void Application::on_render(sf::RenderWindow& window)
     sprite_.setOutlineThickness(0);
 
     // Draw player
+    sprite_.setSize(entities_[(size_t)player_id_].common.transform.size);
     sprite_.setPosition(entities_[(size_t)player_id_].common.transform.position);
     sprite_.setFillColor(sf::Color::Red);
     window.draw(sprite_);

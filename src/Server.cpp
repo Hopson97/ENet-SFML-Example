@@ -162,7 +162,7 @@ void Server::launch()
             }
         }
 
-        constexpr static float ENTITY_MAX_SPEED = 150.0f;
+        constexpr static float ENTITY_MAX_SPEED = TILE_SIZE;
         for (auto& entity : entities_ | std::ranges::views::drop(MAX_CLIENTS))
         {
             auto& entity_transform = entity.common.transform;

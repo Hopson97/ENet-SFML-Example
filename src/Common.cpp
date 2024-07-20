@@ -1,12 +1,13 @@
 #include "Common.h"
 
 #include <algorithm>
-#include <iostream>
+#include <limits>
+#include <print>
 
 #include "Util/Util.h"
 
 constexpr float SPEED = 25;
-constexpr float MAX_SPEED = 256;
+constexpr float MAX_SPEED = TILE_SIZE;
 
 void process_input_for_player(EntityTransform& transform, const Input& input) noexcept
 {
@@ -14,6 +15,7 @@ void process_input_for_player(EntityTransform& transform, const Input& input) no
     sf::Vector2f change{};
     if ((keys & InputKeyPress::W) == InputKeyPress::W && transform.is_grounded)
     {
+        change += {0, -SPEED};
         change += {0, -SPEED * 25};
     }
     if ((keys & InputKeyPress::A) == InputKeyPress::A)
@@ -33,77 +35,83 @@ void process_input_for_player(EntityTransform& transform, const Input& input) no
     velocity.x = std::clamp(velocity.x, -MAX_SPEED, MAX_SPEED) * 0.94f;
     velocity.y = std::clamp(velocity.y, -MAX_SPEED, MAX_SPEED) * 0.98f;
 
-    // Do basic collision detection + response!
     apply_map_collisions(transform);
-
-    // transform.position += velocity;
-
-    // transform.position += change * input.dt;
 }
 
 void apply_map_collisions(EntityTransform& transform)
 {
     auto& velocity = transform.velocity;
     auto& position = transform.position;
+    auto i_pos = sf::Vector2i{position};
+    auto& size = transform.size;
 
     auto next_position = position + velocity;
-    auto next_tile_position = sf::Vector2i{next_position / TILE_SIZE};
+    //auto next_tile_position = sf::Vector2i{next_position / TILE_SIZE};
 
     auto tile_position = sf::Vector2i{position / TILE_SIZE};
 
     transform.is_grounded = false;
-
-    for (int y = tile_position.y - 1; y <= tile_position.y + 1; y++)
+    if (velocity.x > 0)
     {
-        for (int x = tile_position.x - 1; x <= tile_position.x + 1; x++)
+        for (int y = i_pos.y; y <= i_pos.y + size.y; y += I_TILE_SIZE / 2)
         {
-
+            auto x_tile = static_cast<int>((position.x + size.x + velocity.x) / TILE_SIZE);
+            auto y_tile = static_cast<int>(y / TILE_SIZE);
+            if (get_tile(x_tile, y_tile))
+            {
+                velocity.x = 0;
+                next_position.x = x_tile * TILE_SIZE - size.x;
+            }
+        }
+    }
+    else if (velocity.x < 0)
+    {
+        for (int y = i_pos.y; y <= i_pos.y + size.y; y += I_TILE_SIZE / 2)
+        {
+            auto x_tile = static_cast<int>((position.x + velocity.x) / TILE_SIZE);
+            auto y_tile = static_cast<int>(y / TILE_SIZE);
+            if (get_tile(x_tile, y_tile))
+            {
+                velocity.x = 0;
+                next_position.x = x_tile * TILE_SIZE + TILE_SIZE;
+            }
         }
     }
 
-    
-    
-                // auto tile_position = sf::Vector2i{sf::Vector2f{(float)x, (float)y} / TILE_SIZE};
-            if (velocity.x > 0)
-            {
-                if (get_tile(tile_position.x + 1, tile_position.y) )
-                   // get_tile(tile_position.x + 1, tile_position.y + 1))
-                {
-                    velocity.x = 0;
-                    next_position.x = tile_position.x * TILE_SIZE;
-                }
-            }
-            else if (velocity.x < 0)
-            {
-                if (get_tile(tile_position.x, tile_position.y))
-                {
-                    velocity.x = 0;
-                    next_position.x = tile_position.x * TILE_SIZE + TILE_SIZE;
-                }
-            }
+    if (velocity.y > 0)
+    {
 
-            if (velocity.y > 0)
+        for (int x = i_pos.x; x <= i_pos.x + size.x; x += I_TILE_SIZE / 2)
+        {
+            auto x_tile = static_cast<int>(x / TILE_SIZE);
+            int y_tile = (position.y + size.y + velocity.y) / TILE_SIZE;
+            if (get_tile(x_tile, y_tile))
             {
-                if (get_tile(tile_position.x, tile_position.y + 1))
-                {
-                    velocity.y = 0;
-                    next_position.y = tile_position.y * TILE_SIZE;
-                    transform.is_grounded = true;
-                }
+                velocity.y = 0;
+                next_position.y = y_tile * TILE_SIZE - size.y;
+                transform.is_grounded = true;
             }
-            else if (velocity.y < 0)
+        }
+    }
+    else if (velocity.y < 0)
+    {
+
+        for (int x = i_pos.x; x <= i_pos.x + size.x; x += static_cast<int>(TILE_SIZE) / 2)
+        {
+            auto x_tile = static_cast<int>(x / TILE_SIZE);
+            int y_tile = (position.y + velocity.y - 1) / TILE_SIZE;
+            if (get_tile(x_tile, y_tile))
             {
-                if (get_tile(tile_position.x, tile_position.y))
-                {
-                    velocity.y = 0;
-                    next_position.y = tile_position.y * TILE_SIZE + TILE_SIZE;
-                }
+                velocity.y = 0;
+                next_position.y = y_tile * TILE_SIZE + TILE_SIZE;
             }
-    
+        }
+
+    }
 
     if (!transform.is_grounded)
     {
-        transform.velocity.y += 0.35;
+        transform.velocity.y += 0.35f;
     }
 
     position = next_position;
