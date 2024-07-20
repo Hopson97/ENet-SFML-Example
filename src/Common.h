@@ -17,6 +17,9 @@ using i16 = int16_t;
 using i32 = int32_t;
 using i64 = int64_t;
 
+constexpr i32 MAP_SIZE = 32;
+constexpr float TILE_SIZE = 32;
+
 enum InputKeyPress
 {
     NONE = 0,
@@ -36,6 +39,7 @@ struct Input
 struct EntityTransform
 {
     sf::Vector2f position;
+    sf::Vector2f size = {TILE_SIZE - 8, TILE_SIZE - 8};
     sf::Vector2f velocity;
     bool is_grounded = false;
 };
@@ -49,9 +53,6 @@ struct EntityCommon
 
 void process_input_for_player(EntityTransform& transform, const Input& input) noexcept;
 void apply_map_collisions(EntityTransform& transform);
-
-constexpr int MAP_SIZE = 32;
-constexpr float TILE_SIZE = 32;
 
 constexpr std::array<int, MAP_SIZE* MAP_SIZE> MAP = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,

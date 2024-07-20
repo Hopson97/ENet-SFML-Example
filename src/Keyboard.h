@@ -10,10 +10,11 @@ class Keyboard final
   public:
     Keyboard();
     void update(const sf::Event& e);
-    bool isKeyDown(sf::Keyboard::Key key) const;
+    bool is_key_down(sf::Keyboard::Key key) const;
+
+    void reset();
 
   private:
-    void resetKeys();
 
     std::array<bool, sf::Keyboard::KeyCount> m_keys;
 };

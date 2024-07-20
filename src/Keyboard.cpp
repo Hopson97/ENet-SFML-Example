@@ -2,7 +2,7 @@
 
 Keyboard::Keyboard()
 {
-    std::fill(m_keys.begin(), m_keys.end(), false);
+    reset();
 }
 
 void Keyboard::update(const sf::Event& e)
@@ -26,12 +26,12 @@ void Keyboard::update(const sf::Event& e)
     }
 }
 
-bool Keyboard::isKeyDown(sf::Keyboard::Key key) const
+bool Keyboard::is_key_down(sf::Keyboard::Key key) const
 {
     return m_keys[key];
 }
 
-void Keyboard::resetKeys()
+void Keyboard::reset()
 {
     std::fill(m_keys.begin(), m_keys.end(), false);
 }
