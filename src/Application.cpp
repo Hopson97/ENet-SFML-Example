@@ -93,7 +93,16 @@ bool Application::init_as_client()
 
 void Application::on_event([[maybe_unused]] const sf::RenderWindow& window, const sf::Event& e)
 {
-    keyboard_.update(e);
+    if (window.hasFocus())
+    {
+
+        keyboard_.update(e);
+    }
+    else
+    {
+        keyboard_.reset();
+        std::println("reset keyboardzn");
+    }
 }
 
 void Application::on_update(sf::Time dt)
@@ -216,19 +225,19 @@ void Application::on_update(sf::Time dt)
 
     // Process the inputs, storing the key presses into an object to be sent to the server
     Input inputs{.sequence = input_sequence_++, .dt = dt.asSeconds()};
-    if (keyboard_.isKeyDown(sf::Keyboard::W))
+    if (keyboard_.is_key_down(sf::Keyboard::W))
     {
         inputs.keys |= InputKeyPress::W;
     }
-    if (keyboard_.isKeyDown(sf::Keyboard::A))
+    if (keyboard_.is_key_down(sf::Keyboard::A))
     {
         inputs.keys |= InputKeyPress::A;
     }
-    if (keyboard_.isKeyDown(sf::Keyboard::S))
+    if (keyboard_.is_key_down(sf::Keyboard::S))
     {
         inputs.keys |= InputKeyPress::S;
     }
-    if (keyboard_.isKeyDown(sf::Keyboard::D))
+    if (keyboard_.is_key_down(sf::Keyboard::D))
     {
         inputs.keys |= InputKeyPress::D;
     }
@@ -410,7 +419,6 @@ void Application::on_render(sf::RenderWindow& window)
     // Draw player
     sprite_.setPosition(entities_[(size_t)player_id_].common.transform.position);
     sprite_.setFillColor(sf::Color::Red);
-    sprite_.setSize({32, 32});
     window.draw(sprite_);
 
     // Draw entities
@@ -420,6 +428,7 @@ void Application::on_render(sf::RenderWindow& window)
 
         if (e.common.id != player_id_ && e.common.active)
         {
+            sprite_.setSize(e.common.transform.size);
             // Non-player entities are shown as a different colour
             if (e.common.id >= MAX_CLIENTS)
             {
