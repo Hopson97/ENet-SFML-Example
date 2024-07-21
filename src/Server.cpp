@@ -133,6 +133,7 @@ void Server::launch()
                             incoming_message.payload >> player->last_processed >> input.dt >>
                                 input.keys;
 
+                            // TODO - rather than process input straight away...
                             process_input_for_player(player->common.transform, input);
                         }
                         break;

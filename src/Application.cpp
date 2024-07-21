@@ -1,12 +1,13 @@
 #include "Application.h"
 
+#include <cmath>
 #include <iostream>
+#include <print>
+#include <ranges>
 
 #include <SFML/Network/Packet.hpp>
 #include <SFML/Window/Keyboard.hpp>
-#include <cmath>
 #include <imgui.h>
-#include <print>
 
 #include "NetworkMessage.h"
 #include "Util/Util.h"
@@ -105,13 +106,11 @@ void Application::on_event([[maybe_unused]] const sf::RenderWindow& window, cons
 {
     if (window.hasFocus())
     {
-
         keyboard_.update(e);
     }
     else
     {
         keyboard_.reset();
-        std::println("reset keyboardzn");
     }
 }
 
@@ -406,6 +405,7 @@ void Application::on_render(sf::RenderWindow& window)
     }
 
     // Draw tiles
+    sprite_.setTexture(nullptr);
     sprite_.setOutlineThickness(1);
     sprite_.setSize({TILE_SIZE, TILE_SIZE});
     for (int y = 0; y < MAP_SIZE; y++)
@@ -426,32 +426,37 @@ void Application::on_render(sf::RenderWindow& window)
     }
     sprite_.setOutlineThickness(0);
 
-    // Draw player
-    auto& player = entities_[(size_t)player_id_].common.transform;
-    sprite_.setSize(player.size);
-    sprite_.setPosition(player.position);
-    sprite_.setFillColor(sf::Color::White);
+    // Draw players
+    sprite_.setSize(entities_[0].common.transform.size);
     sprite_.setTexture(&player_texture_);
-    window.draw(sprite_);
+    for (int i = 0; i < MAX_CLIENTS; i++)
+    {
+        auto& e = entities_[i].common;
+        if (!e.active)
+        {
+            continue;
+        }
+
+        if (e.id == player_id_)
+        {
+            sprite_.setFillColor(sf::Color::White);
+        }
+        else if (e.active)
+        {
+            sprite_.setFillColor({100, 255, 255, 100});
+        }
+        sprite_.setPosition(e.transform.position);
+        window.draw(sprite_);
+    }
     sprite_.setTexture(nullptr);
 
     // Draw entities
-    sprite_.setFillColor({255, 0, 255, 100});
-    for (auto& e : entities_)
+    sprite_.setFillColor({255, 255, 150, 100});
+    for (auto& e : entities_ | std::ranges::views::drop(MAX_CLIENTS))
     {
-
-        if (e.common.id != player_id_ && e.common.active)
-        {
-            sprite_.setSize(e.common.transform.size);
-            // Non-player entities are shown as a different colour
-            if (e.common.id >= MAX_CLIENTS)
-            {
-                sprite_.setFillColor({255, 255, 150, 100});
-            }
-
-            sprite_.setPosition(e.common.transform.position);
-            window.draw(sprite_);
-        }
+        sprite_.setSize(e.common.transform.size);
+        sprite_.setPosition(e.common.transform.position);
+        window.draw(sprite_);
     }
 }
 
