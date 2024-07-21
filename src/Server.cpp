@@ -33,6 +33,11 @@ Server::Server()
     {
         entities_[i].id = i;
         entities_[i].common.active = i >= MAX_CLIENTS;
+
+        if (i < MAX_CLIENTS)
+        {
+            entities_[i].common.transform.size = {24, 48};
+        }
     }
 }
 

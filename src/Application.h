@@ -2,6 +2,7 @@
 
 #include <SFML/Graphics/RectangleShape.hpp>
 #include <SFML/Graphics/RenderWindow.hpp>
+#include <SFML/Graphics/Texture.hpp>
 #include <SFML/System/Clock.hpp>
 
 #include "Common.h"
@@ -41,6 +42,7 @@ struct InputBuffer
 class Application
 {
   public:
+    Application();
     ~Application();
 
     /// Creates a server on a background thread and connects to it 
@@ -78,6 +80,8 @@ class Application
     /// Used
     u32 input_sequence_ = 0;
     std::vector<InputBuffer> pending_inputs_;
+
+    sf::Texture player_texture_;
 
 
     Keyboard keyboard_;

@@ -52,7 +52,7 @@ void apply_map_collisions(EntityTransform& transform)
     transform.is_grounded = false;
     if (velocity.x > 0)
     {
-        for (int y = i_pos.y; y <= i_pos.y + size.y; y += I_TILE_SIZE / 2)
+        for (int y = i_pos.y; y < i_pos.y + size.y; y += 4)
         {
             auto x_tile = static_cast<int>((position.x + size.x + velocity.x) / TILE_SIZE);
             auto y_tile = static_cast<int>(y / TILE_SIZE);
@@ -65,7 +65,7 @@ void apply_map_collisions(EntityTransform& transform)
     }
     else if (velocity.x < 0)
     {
-        for (int y = i_pos.y; y <= i_pos.y + size.y; y += I_TILE_SIZE / 2)
+        for (int y = i_pos.y; y < i_pos.y + size.y; y += 4)
         {
             auto x_tile = static_cast<int>((position.x + velocity.x) / TILE_SIZE);
             auto y_tile = static_cast<int>(y / TILE_SIZE);
@@ -80,7 +80,7 @@ void apply_map_collisions(EntityTransform& transform)
     if (velocity.y > 0)
     {
 
-        for (int x = i_pos.x; x <= i_pos.x + size.x; x += I_TILE_SIZE / 2)
+        for (int x = i_pos.x; x < i_pos.x + size.x; x += 4)
         {
             auto x_tile = static_cast<int>(x / TILE_SIZE);
             int y_tile = (position.y + size.y + velocity.y) / TILE_SIZE;
@@ -95,7 +95,7 @@ void apply_map_collisions(EntityTransform& transform)
     else if (velocity.y < 0)
     {
 
-        for (int x = i_pos.x; x <= i_pos.x + size.x; x += I_TILE_SIZE / 2)
+        for (int x = i_pos.x; x < i_pos.x + size.x; x += 4)
         {
             auto x_tile = static_cast<int>(x / TILE_SIZE);
             int y_tile = (position.y + velocity.y - 1) / TILE_SIZE;

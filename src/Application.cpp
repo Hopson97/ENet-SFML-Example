@@ -30,6 +30,15 @@ namespace
     }
 } // namespace
 
+Application::Application()
+{
+    player_texture_.loadFromFile("assets/person.png");
+    for (int i = 0; i < MAX_CLIENTS; i++)
+    {
+        entities_[i].common.transform.size = {24, 48};
+    }
+}
+
 Application::~Application()
 {
     disconnect();
@@ -167,8 +176,11 @@ void Application::on_update(sf::Time dt)
                             // If the entity is "this player"
                             if (entity.common.id == player_id_)
                             {
+                                auto& player_transform =
+                                    entities_[(size_t)player_id_].common.transform;
+
                                 // Set position
-                                entities_[(size_t)player_id_].common.transform.position = position;
+                                player_transform.position = position;
 
                                 // Correct position hen the server is out of sync with this client
                                 if (config_.server_reconciliation_)
@@ -183,13 +195,11 @@ void Application::on_update(sf::Time dt)
                                             // identical after re-applping the inputs
                                             if (!out_of_sync_found)
                                             {
-                                                entities_[(size_t)player_id_].common.transform =
-                                                    pending_input.state;
+                                                player_transform = pending_input.state;
                                                 out_of_sync_found = true;
                                             }
-                                            process_input_for_player(
-                                                entities_[(size_t)player_id_].common.transform,
-                                                pending_input.input);
+                                            process_input_for_player(player_transform,
+                                                                     pending_input.input);
                                         }
                                     }
                                 }
@@ -417,10 +427,13 @@ void Application::on_render(sf::RenderWindow& window)
     sprite_.setOutlineThickness(0);
 
     // Draw player
-    sprite_.setSize(entities_[(size_t)player_id_].common.transform.size);
-    sprite_.setPosition(entities_[(size_t)player_id_].common.transform.position);
-    sprite_.setFillColor(sf::Color::Red);
+    auto& player = entities_[(size_t)player_id_].common.transform;
+    sprite_.setSize(player.size);
+    sprite_.setPosition(player.position);
+    sprite_.setFillColor(sf::Color::White);
+    sprite_.setTexture(&player_texture_);
     window.draw(sprite_);
+    sprite_.setTexture(nullptr);
 
     // Draw entities
     sprite_.setFillColor({255, 0, 255, 100});
