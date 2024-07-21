@@ -32,8 +32,7 @@ void process_input_for_player(EntityTransform& transform, const Input& input) no
     }
     auto& velocity = transform.velocity;
     velocity += change * input.dt;
-    velocity.x = std::clamp(velocity.x, -MAX_SPEED, MAX_SPEED) * 0.94f;
-    velocity.y = std::clamp(velocity.y, -MAX_SPEED, MAX_SPEED) * 0.98f;
+
 
     apply_map_collisions(transform);
 }
@@ -45,10 +44,10 @@ void apply_map_collisions(EntityTransform& transform)
     auto i_pos = sf::Vector2i{position};
     auto& size = transform.size;
 
-    auto next_position = position + velocity;
-    //auto next_tile_position = sf::Vector2i{next_position / TILE_SIZE};
+    velocity.x = std::clamp(velocity.x, -MAX_SPEED, MAX_SPEED) * 0.94f;
+    velocity.y = std::clamp(velocity.y, -MAX_SPEED, MAX_SPEED) * 0.98f;
 
-    auto tile_position = sf::Vector2i{position / TILE_SIZE};
+    auto next_position = position + velocity;
 
     transform.is_grounded = false;
     if (velocity.x > 0)
@@ -96,7 +95,7 @@ void apply_map_collisions(EntityTransform& transform)
     else if (velocity.y < 0)
     {
 
-        for (int x = i_pos.x; x <= i_pos.x + size.x; x += static_cast<int>(TILE_SIZE) / 2)
+        for (int x = i_pos.x; x <= i_pos.x + size.x; x += I_TILE_SIZE / 2)
         {
             auto x_tile = static_cast<int>(x / TILE_SIZE);
             int y_tile = (position.y + velocity.y - 1) / TILE_SIZE;
@@ -106,7 +105,6 @@ void apply_map_collisions(EntityTransform& transform)
                 next_position.y = y_tile * TILE_SIZE + TILE_SIZE;
             }
         }
-
     }
 
     if (!transform.is_grounded)

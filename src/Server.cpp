@@ -162,7 +162,6 @@ void Server::launch()
             }
         }
 
-        constexpr static float ENTITY_MAX_SPEED = TILE_SIZE;
         for (auto& entity : entities_ | std::ranges::views::drop(MAX_CLIENTS))
         {
             auto& entity_transform = entity.common.transform;
@@ -176,10 +175,7 @@ void Server::launch()
             auto& velocity = entity_transform.velocity;
             velocity += move * (2.0f + static_cast<float>(entity.id) / 100.0f);
 
-            velocity.x = std::clamp(velocity.x, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
-            velocity.y = std::clamp(velocity.y, -ENTITY_MAX_SPEED, ENTITY_MAX_SPEED) * 0.94f;
             apply_map_collisions(entity_transform);
-            // entity_transform.position += velocity;
         }
 
         ToClientNetworkMessage snapshot(ToClientMessage::Snapshot);
