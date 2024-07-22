@@ -12,17 +12,18 @@
 
 
 constexpr int MAX_CLIENTS = 4;
-constexpr int MAX_ENTITIES = 10;
+constexpr int MAX_ENTITIES = MAX_CLIENTS;
 constexpr float SERVER_TICK_RATE = 20;
 constexpr float SERVER_TPS = 1000 / SERVER_TICK_RATE;
 
 struct ServerEntity
 {
-    i16 id = -1;
     ENetPeer* peer = nullptr; 
     EntityCommon common;
 
     u32 last_processed = 0;
+
+    std::vector<Input> input_buffer;
 };
 
 class Server

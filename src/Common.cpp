@@ -15,7 +15,6 @@ void process_input_for_player(EntityTransform& transform, const Input& input) no
     sf::Vector2f change{};
     if ((keys & InputKeyPress::W) == InputKeyPress::W && transform.is_grounded)
     {
-        change += {0, -SPEED};
         change += {0, -SPEED * 25};
     }
     if ((keys & InputKeyPress::A) == InputKeyPress::A)
@@ -32,9 +31,6 @@ void process_input_for_player(EntityTransform& transform, const Input& input) no
     }
     auto& velocity = transform.velocity;
     velocity += change * input.dt;
-
-
-    apply_map_collisions(transform);
 }
 
 void apply_map_collisions(EntityTransform& transform)

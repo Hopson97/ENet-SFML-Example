@@ -199,6 +199,8 @@ void Application::on_update(sf::Time dt)
                                             }
                                             process_input_for_player(player_transform,
                                                                      pending_input.input);
+                                            apply_map_collisions(player_transform);
+
                                         }
                                     }
                                 }
@@ -257,7 +259,9 @@ void Application::on_update(sf::Time dt)
     input_message.payload << inputs.sequence << inputs.dt << inputs.keys;
     enet_peer_send(peer_, 0, input_message.to_enet_packet());
 
-    pending_inputs_.push_back({inputs, entities_[(size_t)player_id_].common.transform});
+    auto& player_transform = entities_[(size_t)player_id_].common.transform;
+
+    pending_inputs_.push_back({inputs, player_transform});
 
     // Client side prediction ensures the player sees smooth movement despite the real
     // simulation being om the server
@@ -265,7 +269,8 @@ void Application::on_update(sf::Time dt)
     // process the input
     if (config_.client_side_prediction_)
     {
-        process_input_for_player(entities_[(size_t)player_id_].common.transform, inputs);
+        process_input_for_player(player_transform, inputs);
+        apply_map_collisions(player_transform);
     }
 
     // Deubgging t

@@ -31,7 +31,7 @@ Server::Server()
 {
     for (int i = 0; i < entities_.size(); i++)
     {
-        entities_[i].id = i;
+        entities_[i].common.id = i;
         entities_[i].common.active = i >= MAX_CLIENTS;
 
         if (i < MAX_CLIENTS)
@@ -53,7 +53,7 @@ bool Server::run()
 
     if (!server_)
     {
-        std::println("An error occurred while trying to create an ENet server host.\n");
+        std::println("An error occurred while trying to create an ENet server host.");
         return false;
     }
 
@@ -90,11 +90,12 @@ void Server::launch()
                     {
                         if (!entities_[i].peer)
                         {
-                            id = entities_[i].id;
+                            id = entities_[i].common.id;
                             entities_[i].peer = event.peer;
                             entities_[i].common.active = true;
                             event.peer->data = (void*)&entities_[i];
-                            std::println("[Server] New client slot: {}", (int)entities_[i].id);
+                            std::println("[Server] New client slot: {}",
+                                         (int)entities_[i].common.id);
                             break;
                         }
                     }
@@ -133,8 +134,13 @@ void Server::launch()
                             incoming_message.payload >> player->last_processed >> input.dt >>
                                 input.keys;
 
+                            // std::println("Got input {} {} from player {}", input.keys, input.dt,
+                            // player->common.id);
+
+                            player->input_buffer.push_back(input);
+
                             // TODO - rather than process input straight away...
-                            process_input_for_player(player->common.transform, input);
+                            // process_input_for_player(player->common.transform, input);
                         }
                         break;
 
@@ -168,6 +174,32 @@ void Server::launch()
             }
         }
 
+        for (int i = 0; i < MAX_CLIENTS; i++)
+        {
+            auto& player = entities_[i];
+            if (!player.common.active)
+            {
+
+                continue;
+            }
+            for (const auto& input : player.input_buffer)
+            {
+                // prevent dts above 60!
+                if (input.dt <= 0.16)
+                {
+                    process_input_for_player(player.common.transform, input);
+                    apply_map_collisions(player.common.transform);
+                }
+            }
+
+            if (player.input_buffer.empty())
+            {
+                std::println("nothing to preoc");
+                apply_map_collisions(player.common.transform);
+            }
+            player.input_buffer.clear();
+        }
+
         for (auto& entity : entities_ | std::ranges::views::drop(MAX_CLIENTS))
         {
             auto& entity_transform = entity.common.transform;
@@ -179,7 +211,7 @@ void Server::launch()
             auto move = diff / (len == 0 ? 1 : len);
 
             auto& velocity = entity_transform.velocity;
-            velocity += move * (2.0f + static_cast<float>(entity.id) / 100.0f);
+            velocity += move * (2.0f + static_cast<float>(entity.common.id) / 100.0f);
 
             apply_map_collisions(entity_transform);
         }
@@ -187,7 +219,7 @@ void Server::launch()
         ToClientNetworkMessage snapshot(ToClientMessage::Snapshot);
         for (const auto& entity : entities_)
         {
-            snapshot.payload << entity.id << entity.last_processed
+            snapshot.payload << entity.common.id << entity.last_processed
                              << entity.common.transform.position.x
                              << entity.common.transform.position.y << entity.common.active;
         }
