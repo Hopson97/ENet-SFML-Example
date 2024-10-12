@@ -194,7 +194,7 @@ void Server::launch()
 
             if (player.input_buffer.empty())
             {
-                std::println("nothing to preoc");
+                std::println("No player input to process.");
                 apply_map_collisions(player.common.transform);
             }
             player.input_buffer.clear();
