@@ -12,9 +12,9 @@
 
 namespace
 {
-    void handle_event(const sf::Event& e, sf::Window& window, bool& show_profiler);
+    void handle_event(const sf::Event& event, sf::Window& window, bool& show_debug_info,
+                      bool& close_requested);
 } // namespace
-
 int main()
 {
     if (enet_initialize() != 0)
@@ -23,15 +23,15 @@ int main()
         return EXIT_FAILURE;
     }
 
-    sf::RenderWindow window({1600, 900}, "ENet Example");
+    sf::RenderWindow window(sf::VideoMode({1600, 900}),
+                            "PROJECT_NAME_PLACEHOLDER - Press F1 for debug");
     window.setVerticalSyncEnabled(true);
-    window.setActive(true);
-
     if (!ImGui::SFML::Init(window))
     {
-        std::cerr << "Failed to init ImGUI::SFML\n";
+        std::println(std::cerr, "Failed to init ImGUI::SFML.");
         return EXIT_FAILURE;
     }
+
 
     sf::Clock clock;
     Profiler profiler;
@@ -42,11 +42,13 @@ int main()
 
     while (window.isOpen())
     {
-        for (sf::Event e{}; window.pollEvent(e);)
+        bool close_requested = false;
+
+        while (auto event = window.pollEvent())
         {
-            ImGui::SFML::ProcessEvent(e);
-            app.on_event(window, e);
-            handle_event(e, window, show_profiler);
+            ImGui::SFML::ProcessEvent(window, *event);
+            app.on_event(window, *event);
+            handle_event(*event, window, show_profiler, close_requested);
         }
         auto dt = clock.restart();
         // Update
@@ -96,6 +98,11 @@ int main()
         // End frame...
         ImGui::SFML::Render(window);
         window.display();
+        if (close_requested)
+        {
+            window.close();
+        }
+
     }
 
     ImGui::SFML::Shutdown(window);
@@ -106,32 +113,28 @@ int main()
 
 namespace
 {
-    void handle_event(const sf::Event& e, sf::Window& window, bool& show_profiler)
+    void handle_event(const sf::Event& event, sf::Window& window, bool& show_debug_info,
+                      bool& close_requested)
     {
-        switch (e.type)
+        if (event.is<sf::Event::Closed>())
         {
-            case sf::Event::Closed:
-                window.close();
-                break;
+            close_requested = true;
+        }
+        else if (auto* key = event.getIf<sf::Event::KeyPressed>())
+        {
+            switch (key->code)
+            {
+                case sf::Keyboard::Key::Escape:
+                    close_requested = true;
+                    break;
 
-            case sf::Event::KeyReleased:
-                switch (e.key.code)
-                {
-                    case sf::Keyboard::Escape:
-                        window.close();
-                        break;
+                case sf::Keyboard::Key::F1:
+                    show_debug_info = !show_debug_info;
+                    break;
 
-                    case sf::Keyboard::F1:
-                        show_profiler = !show_profiler;
-                        break;
-
-                    default:
-                        break;
-                }
-                break;
-
-            default:
-                break;
+                default:
+                    break;
+            }
         }
     }
 } // namespace

@@ -6,7 +6,7 @@
 #include <SFML/System/Clock.hpp>
 
 #include "Common.h"
-#include "Keyboard.h"
+#include "Util/Keyboard.h"
 #include "Server.h"
 
 enum class ConnectState

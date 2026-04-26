@@ -237,19 +237,19 @@ void Application::on_update(sf::Time dt)
 
     // Process the inputs, storing the key presses into an object to be sent to the server
     Input inputs{.sequence = input_sequence_++, .dt = dt.asSeconds()};
-    if (keyboard_.is_key_down(sf::Keyboard::W))
+    if (keyboard_.is_key_down(sf::Keyboard::Key::W))
     {
         inputs.keys |= InputKeyPress::W;
     }
-    if (keyboard_.is_key_down(sf::Keyboard::A))
+    if (keyboard_.is_key_down(sf::Keyboard::Key::A))
     {
         inputs.keys |= InputKeyPress::A;
     }
-    if (keyboard_.is_key_down(sf::Keyboard::S))
+    if (keyboard_.is_key_down(sf::Keyboard::Key::S))
     {
         inputs.keys |= InputKeyPress::S;
     }
-    if (keyboard_.is_key_down(sf::Keyboard::D))
+    if (keyboard_.is_key_down(sf::Keyboard::Key::D))
     {
         inputs.keys |= InputKeyPress::D;
     }
@@ -424,7 +424,7 @@ void Application::on_render(sf::RenderWindow& window)
                 {
                     sprite_.setFillColor(sf::Color::Green);
                 }
-                sprite_.setPosition(x * TILE_SIZE, y * TILE_SIZE);
+                sprite_.setPosition({x * TILE_SIZE, y * TILE_SIZE});
                 window.draw(sprite_);
             }
         }
