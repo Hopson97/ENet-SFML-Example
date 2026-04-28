@@ -184,6 +184,9 @@ void Application::on_update(sf::Time dt)
                                 // Correct position hen the server is out of sync with this client
                                 if (config_.server_reconciliation_)
                                 {
+                                    std::erase_if(
+                                        pending_inputs_, [input_sequence](const auto& pending)
+                                        { return pending.input.sequence <= input_sequence; });
                                     bool out_of_sync_found = false;
                                     for (const auto& pending_input : pending_inputs_)
                                     {
@@ -204,7 +207,6 @@ void Application::on_update(sf::Time dt)
                                         }
                                     }
                                 }
-                                pending_inputs_.clear();
                             }
                             else if (entity.common.active)
                             {
@@ -431,6 +433,15 @@ void Application::on_render(sf::RenderWindow& window)
     }
     sprite_.setOutlineThickness(0);
 
+    // Draw entities
+    sprite_.setFillColor({255, 255, 150, 100});
+    for (auto& e : entities_ | std::ranges::views::drop(MAX_CLIENTS))
+    {
+        sprite_.setSize(e.common.transform.size);
+        sprite_.setPosition(e.common.transform.position);
+        window.draw(sprite_);
+    }
+
     // Draw players
     sprite_.setSize(entities_[0].common.transform.size);
     sprite_.setTexture(&player_texture_);
@@ -455,14 +466,7 @@ void Application::on_render(sf::RenderWindow& window)
     }
     sprite_.setTexture(nullptr);
 
-    // Draw entities
-    sprite_.setFillColor({255, 255, 150, 100});
-    for (auto& e : entities_ | std::ranges::views::drop(MAX_CLIENTS))
-    {
-        sprite_.setSize(e.common.transform.size);
-        sprite_.setPosition(e.common.transform.position);
-        window.draw(sprite_);
-    }
+
 }
 
 void Application::disconnect()
